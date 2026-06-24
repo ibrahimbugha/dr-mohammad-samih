@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Generate Test Patient Images</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#f1f5f9;display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:24px}
+  h1{font-size:22px;font-weight:700;color:#1e293b;margin:0}
+  p{font-size:14px;color:#64748b;margin:0;text-align:center;max-width:520px}
+  .cards{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+  .card{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  canvas{border-radius:8px;border:1px solid #e2e8f0}
+  .btn{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer}
+  .btn:hover{background:#1d4ed8}
+  .label{font-size:13px;font-weight:600;color:#334155}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:12px;color:#92400e;max-width:560px;text-align:center;line-height:1.5}
+  .all-btn{background:#16a34a;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer}
+  .all-btn:hover{background:#15803d}
+  .info{font-size:11px;color:#94a3b8}
+</style>
+</head>
+<body>
+<h1>🧪 Test Patient Demo Images</h1>
+<p>Click "Download All 3 Images" then upload them to OrthoAnalyse to test the landmark detection and analysis pipeline.</p>
+
+<div class="note">
+  ⚠️ These are synthetic schematic illustrations, not real clinical photographs.<br/>
+  They test the app's UI flow. For real accuracy testing, use actual standardised clinical photos.
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="label">① Frontal (Rest)</div>
+    <canvas id="c1" width="480" height="640"></canvas>
+    <button class="btn" onclick="dl('c1','demo_frontal.jpg')">⬇ Download Frontal</button>
+    <span class="info">Case: mild Class II tendency, slight chin deviation</span>
+  </div>
+  <div class="card">
+    <div class="label">② Profile (Rest)</div>
+    <canvas id="c2" width="480" height="640"></canvas>
+    <button class="btn" onclick="dl('c2','demo_profile.jpg')">⬇ Download Profile</button>
+    <span class="info">Case: retruded chin, acute nasolabial angle</span>
+  </div>
+  <div class="card">
+    <div class="label">③ Full Smile</div>
+    <canvas id="c3" width="480" height="640"></canvas>
+    <button class="btn" onclick="dl('c3','demo_smile.jpg')">⬇ Download Smile</button>
+    <span class="info">Case: slight midline deviation, consonant arc</span>
+  </div>
+</div>
+
+<button class="all-btn" onclick="dlAll()">⬇ Download All 3 Images</button>
+
+<p style="font-size:12px;color:#94a3b8">After downloading: open orthodontic-analysis.html → upload these 3 images → adjust landmarks → confirm → view report</p>
+
+<script>
+// ── Drawing helpers ─────────────────────────────────────────────────────────
+function skin(ctx, x, y, w, h, r=20){
+  ctx.beginPath();
+  ctx.roundRect(x,y,w,h,r);
+  ctx.fill();
+}
+function ellipse(ctx, cx, cy, rx, ry, rot=0){
+  ctx.beginPath();
+  ctx.ellipse(cx,cy,rx,ry,rot,0,Math.PI*2);
+  ctx.fill();
+}
+function line(ctx,x1,y1,x2,y2,w=1){
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+  ctx.lineWidth=w;ctx.stroke();
+}
+
+// ── FRONTAL FACE ────────────────────────────────────────────────────────────
+function drawFrontal(canvas){
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+
+  // Background — plain light grey
+  ctx.fillStyle='#d4c8b8'; ctx.fillRect(0,0,W,H);
+  // Add slight gradient
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#e8ddd0'); bg.addColorStop(1,'#c8b8a8');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  const cx=W/2, faceTop=80, faceH=430, faceW=240;
+
+  // Hair
+  ctx.fillStyle='#3a2a1a';
+  ctx.beginPath();
+  ctx.ellipse(cx,faceTop+30,faceW/2+20,90,0,Math.PI,0);
+  ctx.fill();
+  // Side hair
+  ctx.fillRect(cx-faceW/2-18,faceTop+30,30,faceH*0.55);
+  ctx.fillRect(cx+faceW/2-12,faceTop+30,30,faceH*0.55);
+
+  // Neck
+  ctx.fillStyle='#d4a882';
+  ctx.fillRect(cx-38,faceTop+faceH,76,90);
+  // Shoulders
+  ctx.beginPath();
+  ctx.ellipse(cx,faceTop+faceH+110,140,60,0,0,Math.PI);
+  ctx.fill();
+
+  // Face shape
+  const faceGrad=ctx.createRadialGradient(cx,faceTop+faceH*0.4,30,cx,faceTop+faceH*0.4,faceW*0.7);
+  faceGrad.addColorStop(0,'#f0c090'); faceGrad.addColorStop(1,'#d4956a');
+  ctx.fillStyle=faceGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx,faceTop+faceH*0.42,faceW/2,faceH*0.52,0,0,Math.PI*2);
+  ctx.fill();
+
+  // Forehead
+  ctx.fillStyle='#eba070';
+  ctx.beginPath();
+  ctx.ellipse(cx,faceTop+60,faceW/2+5,80,0,Math.PI,0);
+  ctx.fill();
+
+  // ── Eyes
+  const eyeY=faceTop+faceH*0.28;
+  const eyeRx=55, eyeRy=22;
+
+  // Eyebrows
+  ctx.strokeStyle='#3a2a1a'; ctx.lineWidth=5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cx-eyeRx-10,eyeY-30); ctx.quadraticCurveTo(cx-eyeRx+15,eyeY-40,cx-eyeRx+40,eyeY-32); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+eyeRx+10,eyeY-30); ctx.quadraticCurveTo(cx+eyeRx-15,eyeY-40,cx+eyeRx-40,eyeY-32); ctx.stroke();
+
+  // Eye whites
+  function drawEye(ex){
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.ellipse(ex,eyeY,eyeRx,eyeRy,0,0,Math.PI*2); ctx.fill();
+    // Iris
+    ctx.fillStyle='#5c3a1e';
+    ctx.beginPath(); ctx.arc(ex,eyeY,14,0,Math.PI*2); ctx.fill();
+    // Pupil
+    ctx.fillStyle='#1a1008';
+    ctx.beginPath(); ctx.arc(ex,eyeY,7,0,Math.PI*2); ctx.fill();
+    // Highlight
+    ctx.fillStyle='rgba(255,255,255,.7)';
+    ctx.beginPath(); ctx.arc(ex+5,eyeY-5,3,0,Math.PI*2); ctx.fill();
+    // Eyelids
+    ctx.strokeStyle='#3a2a1a'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(ex,eyeY,eyeRx,eyeRy,0,Math.PI,0); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(ex,eyeY+2,eyeRx,eyeRy-2,0,0,Math.PI); ctx.stroke();
+    // Upper lash line
+    ctx.strokeStyle='#1a0f00'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.ellipse(ex,eyeY,eyeRx,eyeRy+2,0,Math.PI,0); ctx.stroke();
+  }
+  drawEye(cx-eyeRx-8);
+  drawEye(cx+eyeRx+8);
+
+  // ── Nose
+  const noseTop=faceTop+faceH*0.43, noseBot=faceTop+faceH*0.56;
+  ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=2; ctx.lineCap='round';
+  // Bridge
+  ctx.beginPath(); ctx.moveTo(cx-10,noseTop-10); ctx.quadraticCurveTo(cx-18,noseBot-20,cx-20,noseBot); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+10,noseTop-10); ctx.quadraticCurveTo(cx+18,noseBot-20,cx+20,noseBot); ctx.stroke();
+  // Alar
+  ctx.strokeStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.arc(cx-24,noseBot-4,14,0,Math.PI); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx+24,noseBot-4,14,0,Math.PI); ctx.stroke();
+  // Nostrils
+  ctx.fillStyle='rgba(100,50,30,.5)';
+  ctx.beginPath(); ctx.ellipse(cx-22,noseBot+2,7,4,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+22,noseBot+2,7,4,0,0,Math.PI*2); ctx.fill();
+  // Tip
+  ctx.fillStyle='rgba(200,130,80,.4)';
+  ctx.beginPath(); ctx.arc(cx,noseBot,10,0,Math.PI*2); ctx.fill();
+
+  // ── Lips (at rest — closed)
+  const lipY=faceTop+faceH*0.645;
+  // Upper lip
+  ctx.fillStyle='#c06050';
+  ctx.beginPath();
+  ctx.moveTo(cx-35,lipY+4);
+  ctx.quadraticCurveTo(cx-18,lipY-16,cx,lipY-8);
+  ctx.quadraticCurveTo(cx+18,lipY-16,cx+35,lipY+4);
+  ctx.quadraticCurveTo(cx,lipY+14,cx-35,lipY+4);
+  ctx.fill();
+  // Lower lip
+  ctx.fillStyle='#d07060';
+  ctx.beginPath();
+  ctx.moveTo(cx-35,lipY+4);
+  ctx.quadraticCurveTo(cx-20,lipY+30,cx,lipY+28);
+  ctx.quadraticCurveTo(cx+20,lipY+30,cx+35,lipY+4);
+  ctx.quadraticCurveTo(cx,lipY+12,cx-35,lipY+4);
+  ctx.fill();
+  // Mouth line
+  ctx.strokeStyle='#803030'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(cx-35,lipY+4); ctx.quadraticCurveTo(cx,lipY+6,cx+35,lipY+4); ctx.stroke();
+
+  // ── Chin — slight left deviation (clinical case)
+  // Already baked into the face ellipse via slight offset
+  // Chin dimple
+  ctx.strokeStyle='rgba(0,0,0,.15)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(cx+4,faceTop+faceH*0.88,8,0,Math.PI); ctx.stroke();
+
+  // ── Ears
+  function drawEar(ex, flip){
+    ctx.fillStyle='#d4956a';
+    ctx.beginPath();
+    ctx.ellipse(ex,eyeY+30,18,34,flip?-0.1:0.1,0,Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.ellipse(ex,eyeY+30,10,20,flip?-0.1:0.1,0,Math.PI*2);
+    ctx.stroke();
+  }
+  drawEar(cx-faceW/2+6, false);
+  drawEar(cx+faceW/2-6, true);
+
+  // ── Philtrum
+  ctx.strokeStyle='rgba(0,0,0,.12)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(cx-8,noseBot+5); ctx.lineTo(cx-6,lipY-8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+8,noseBot+5); ctx.lineTo(cx+6,lipY-8); ctx.stroke();
+
+  // ── Subtle shading / cheeks
+  ctx.fillStyle='rgba(220,100,80,.08)';
+  ctx.beginPath(); ctx.ellipse(cx-65,lipY-10,40,28,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+65,lipY-10,40,28,0,0,Math.PI*2); ctx.fill();
+
+  // Label
+  ctx.fillStyle='rgba(0,0,0,.4)'; ctx.font='12px monospace';
+  ctx.fillText('Demo Patient — Frontal Rest  |  Class II tendency',20,H-20);
+}
+
+// ── PROFILE FACE ────────────────────────────────────────────────────────────
+function drawProfile(canvas){
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+
+  // Background
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#e0d4c4'); bg.addColorStop(1,'#c4b4a4');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // Neck
+  ctx.fillStyle='#d4a882';
+  ctx.fillRect(180,400,80,160);
+  // Shoulder
+  ctx.beginPath(); ctx.ellipse(200,560,120,50,0.2,0,Math.PI); ctx.fill();
+
+  // Hair back
+  ctx.fillStyle='#3a2a1a';
+  ctx.beginPath();
+  ctx.moveTo(260,100); ctx.quadraticCurveTo(380,80,400,300);
+  ctx.quadraticCurveTo(400,420,360,440);
+  ctx.lineTo(320,440); ctx.quadraticCurveTo(340,280,300,160);
+  ctx.closePath(); ctx.fill();
+
+  // Face profile path
+  const faceGrad=ctx.createRadialGradient(230,280,20,230,280,180);
+  faceGrad.addColorStop(0,'#f0c090'); faceGrad.addColorStop(1,'#c88050');
+  ctx.fillStyle=faceGrad;
+  ctx.beginPath();
+  // Forehead
+  ctx.moveTo(260,100);
+  ctx.quadraticCurveTo(300,90,310,120);
+  // Eye area / brow ridge
+  ctx.quadraticCurveTo(300,150,290,160);
+  // Nasal bridge
+  ctx.lineTo(275,190);
+  // Nasal tip — protruded (Class II)
+  ctx.quadraticCurveTo(255,220,240,230);
+  ctx.quadraticCurveTo(210,250,220,270);
+  // Upper lip
+  ctx.quadraticCurveTo(215,285,225,295);
+  // Lower lip
+  ctx.quadraticCurveTo(230,308,222,318);
+  // Chin — slightly receded (Class II)
+  ctx.quadraticCurveTo(215,340,220,365);
+  ctx.quadraticCurveTo(225,385,200,400);
+  // Under chin / neck
+  ctx.quadraticCurveTo(190,420,180,440);
+  ctx.lineTo(180,100);
+  ctx.closePath();
+  ctx.fill();
+
+  // Hair front
+  ctx.fillStyle='#3a2a1a';
+  ctx.beginPath();
+  ctx.moveTo(180,100); ctx.quadraticCurveTo(260,60,300,100);
+  ctx.quadraticCurveTo(280,130,260,100);
+  ctx.lineTo(180,100); ctx.fill();
+
+  // Ear (profile — ear on left side)
+  ctx.fillStyle='#d4a070';
+  ctx.beginPath();
+  ctx.ellipse(295,230,20,30,0.15,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.ellipse(298,232,10,18,0.15,0,Math.PI*2); ctx.stroke();
+  // Tragus
+  ctx.fillStyle='#c09060';
+  ctx.beginPath(); ctx.ellipse(280,235,6,10,-0.3,0,Math.PI*2); ctx.fill();
+
+  // Eye (profile view)
+  const eyeX=248, eyeY=175;
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.ellipse(eyeX,eyeY,18,12,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#5c3a1e';
+  ctx.beginPath(); ctx.arc(eyeX+4,eyeY,10,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#1a1008';
+  ctx.beginPath(); ctx.arc(eyeX+5,eyeY,5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.7)';
+  ctx.beginPath(); ctx.arc(eyeX+7,eyeY-3,2,0,Math.PI*2); ctx.fill();
+  // Eyelid
+  ctx.strokeStyle='#1a0f00'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(eyeX,eyeY,18,12,-0.1,Math.PI,0); ctx.stroke();
+  // Eyelash
+  ctx.strokeStyle='#1a0f00'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.ellipse(eyeX,eyeY,18,13,-0.1,Math.PI,-0.2); ctx.stroke();
+
+  // Eyebrow
+  ctx.strokeStyle='#3a2a1a'; ctx.lineWidth=4; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(225,152); ctx.quadraticCurveTo(248,142,268,148); ctx.stroke();
+
+  // Nose bridge + tip (profile)
+  ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=2;
+  // Nasal bridge highlight
+  ctx.fillStyle='rgba(255,200,150,.3)';
+  ctx.beginPath();
+  ctx.moveTo(275,190); ctx.quadraticCurveTo(268,210,250,228); ctx.quadraticCurveTo(240,240,235,238);
+  ctx.quadraticCurveTo(245,228,248,218); ctx.quadraticCurveTo(260,200,268,185);
+  ctx.fill();
+  // Nostril
+  ctx.fillStyle='rgba(80,40,20,.5)';
+  ctx.beginPath(); ctx.ellipse(224,265,8,5,0.5,0,Math.PI*2); ctx.fill();
+  // Columella
+  ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(222,258); ctx.quadraticCurveTo(218,265,220,272); ctx.stroke();
+
+  // Lips (profile)
+  ctx.fillStyle='#c06050';
+  ctx.beginPath();
+  ctx.moveTo(226,293); ctx.quadraticCurveTo(215,290,218,297); ctx.quadraticCurveTo(220,302,226,300); ctx.fill();
+  ctx.fillStyle='#d07060';
+  ctx.beginPath();
+  ctx.moveTo(218,300); ctx.quadraticCurveTo(215,310,220,318); ctx.quadraticCurveTo(225,320,228,315); ctx.fill();
+
+  // Philtrum
+  ctx.strokeStyle='rgba(0,0,0,.1)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(225,272); ctx.lineTo(226,290); ctx.stroke();
+
+  // Label
+  ctx.fillStyle='rgba(0,0,0,.4)'; ctx.font='12px monospace';
+  ctx.fillText('Demo Patient — Profile Rest  |  Retruded chin',20,H-20);
+}
+
+// ── SMILE FACE ──────────────────────────────────────────────────────────────
+function drawSmile(canvas){
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#e8ddd0'); bg.addColorStop(1,'#c8b4a0');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  const cx=W/2, faceTop=80, faceH=430, faceW=240;
+
+  // Hair
+  ctx.fillStyle='#3a2a1a';
+  ctx.beginPath(); ctx.ellipse(cx,faceTop+30,faceW/2+20,90,0,Math.PI,0); ctx.fill();
+  ctx.fillRect(cx-faceW/2-18,faceTop+30,30,faceH*0.5);
+  ctx.fillRect(cx+faceW/2-12,faceTop+30,30,faceH*0.5);
+
+  // Neck
+  ctx.fillStyle='#d4a882';
+  ctx.fillRect(cx-38,faceTop+faceH,76,90);
+  ctx.beginPath(); ctx.ellipse(cx,faceTop+faceH+110,140,60,0,0,Math.PI); ctx.fill();
+
+  // Face
+  const faceGrad=ctx.createRadialGradient(cx,faceTop+faceH*0.4,30,cx,faceTop+faceH*0.4,faceW*0.7);
+  faceGrad.addColorStop(0,'#f0c090'); faceGrad.addColorStop(1,'#d4956a');
+  ctx.fillStyle=faceGrad;
+  ctx.beginPath(); ctx.ellipse(cx,faceTop+faceH*0.42,faceW/2,faceH*0.52,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#eba070';
+  ctx.beginPath(); ctx.ellipse(cx,faceTop+60,faceW/2+5,80,0,Math.PI,0); ctx.fill();
+
+  // Cheek lift from smile
+  ctx.fillStyle='rgba(220,100,80,.14)';
+  ctx.beginPath(); ctx.ellipse(cx-70,faceTop+faceH*0.56,55,35,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+70,faceTop+faceH*0.56,55,35,0,0,Math.PI*2); ctx.fill();
+
+  // Eyes (slightly squinting from smile)
+  const eyeY=faceTop+faceH*0.28;
+  const eyeRx=52, eyeRy=18;
+
+  // Eyebrows
+  ctx.strokeStyle='#3a2a1a'; ctx.lineWidth=5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cx-eyeRx-10,eyeY-28); ctx.quadraticCurveTo(cx-eyeRx+15,eyeY-38,cx-eyeRx+40,eyeY-30); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+eyeRx+10,eyeY-28); ctx.quadraticCurveTo(cx+eyeRx-15,eyeY-38,cx+eyeRx-40,eyeY-30); ctx.stroke();
+
+  function drawSmileEye(ex){
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.ellipse(ex,eyeY,eyeRx,eyeRy,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#5c3a1e';
+    ctx.beginPath(); ctx.arc(ex,eyeY,13,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#1a1008';
+    ctx.beginPath(); ctx.arc(ex,eyeY,6,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.7)';
+    ctx.beginPath(); ctx.arc(ex+4,eyeY-4,3,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#1a0f00'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.ellipse(ex,eyeY,eyeRx,eyeRy+2,0,Math.PI,0); ctx.stroke();
+    // Squint lower eyelid
+    ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(ex,eyeY+4,eyeRx,eyeRy-2,0,0,Math.PI); ctx.stroke();
+    // Crow's feet (smile lines)
+    ctx.strokeStyle='rgba(0,0,0,.12)'; ctx.lineWidth=1.5;
+    const sx=ex>cx?ex+eyeRx:ex-eyeRx;
+    const dir=ex>cx?1:-1;
+    ctx.beginPath(); ctx.moveTo(sx,eyeY-8); ctx.lineTo(sx+dir*18,eyeY-16); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sx,eyeY); ctx.lineTo(sx+dir*20,eyeY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sx,eyeY+8); ctx.lineTo(sx+dir*16,eyeY+16); ctx.stroke();
+  }
+  drawSmileEye(cx-eyeRx-8);
+  drawSmileEye(cx+eyeRx+8);
+
+  // Nose
+  const noseTop=faceTop+faceH*0.43, noseBot=faceTop+faceH*0.55;
+  ctx.strokeStyle='rgba(0,0,0,.22)'; ctx.lineWidth=2; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cx-10,noseTop-10); ctx.quadraticCurveTo(cx-17,noseBot-20,cx-20,noseBot); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+10,noseTop-10); ctx.quadraticCurveTo(cx+17,noseBot-20,cx+20,noseBot); ctx.stroke();
+  ctx.strokeStyle='rgba(0,0,0,.25)';
+  ctx.beginPath(); ctx.arc(cx-23,noseBot-4,13,0,Math.PI); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx+23,noseBot-4,13,0,Math.PI); ctx.stroke();
+  ctx.fillStyle='rgba(100,50,30,.4)';
+  ctx.beginPath(); ctx.ellipse(cx-21,noseBot+1,6,4,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+21,noseBot+1,6,4,0,0,Math.PI*2); ctx.fill();
+
+  // ── Smile mouth with teeth
+  const mouthY=faceTop+faceH*0.63;
+  const mouthW=90;
+
+  // Lips
+  ctx.fillStyle='#c05848';
+  ctx.beginPath();
+  ctx.moveTo(cx-mouthW,mouthY);
+  ctx.quadraticCurveTo(cx-mouthW+20,mouthY-22,cx,mouthY-14);
+  ctx.quadraticCurveTo(cx+mouthW-20,mouthY-22,cx+mouthW,mouthY);
+  ctx.quadraticCurveTo(cx,mouthY+16,cx-mouthW,mouthY);
+  ctx.fill();
+
+  // Mouth interior
+  ctx.fillStyle='#3a1a1a';
+  ctx.beginPath();
+  ctx.moveTo(cx-mouthW+8,mouthY);
+  ctx.quadraticCurveTo(cx,mouthY-12,cx+mouthW-8,mouthY);
+  ctx.quadraticCurveTo(cx+mouthW-8,mouthY+22,cx-mouthW+8,mouthY+22);
+  ctx.fill();
+
+  // Upper teeth — 6 visible + buccal (slight midline shift +1mm)
+  const toothTop=mouthY-8, toothH=22;
+  const teethX=[cx-52,cx-35,cx-19,cx-4,cx+11,cx+26,cx+41]; // slight left offset for midline deviation
+  ctx.fillStyle='#f8f4f0';
+  for(let i=0;i<teethX.length;i++){
+    const tw=i===0||i===6?12:14;
+    ctx.fillRect(teethX[i]-tw/2+1,toothTop,tw-2,toothH);
+    ctx.strokeStyle='rgba(180,160,140,.5)'; ctx.lineWidth=1;
+    ctx.strokeRect(teethX[i]-tw/2+1,toothTop,tw-2,toothH);
+  }
+  // Gum line
+  ctx.fillStyle='#d06060';
+  ctx.beginPath();
+  ctx.roundRect(cx-mouthW+8,toothTop-6,mouthW*2-16,8,4);
+  ctx.fill();
+
+  // Lower teeth (partially visible)
+  const ltoothTop=mouthY+12;
+  const lteethX=[cx-32,cx-18,cx-5,cx+7,cx+20,cx+33];
+  ctx.fillStyle='#f0ecе8';
+  ctx.fillStyle='#ede8e2';
+  for(let i=0;i<lteethX.length;i++){
+    ctx.fillRect(lteethX[i]-6,ltoothTop,11,14);
+    ctx.strokeStyle='rgba(180,160,140,.4)'; ctx.lineWidth=1;
+    ctx.strokeRect(lteethX[i]-6,ltoothTop,11,14);
+  }
+
+  // Lower lip
+  ctx.fillStyle='#d06858';
+  ctx.beginPath();
+  ctx.moveTo(cx-mouthW,mouthY);
+  ctx.quadraticCurveTo(cx-mouthW+15,mouthY+30,cx,mouthY+32);
+  ctx.quadraticCurveTo(cx+mouthW-15,mouthY+30,cx+mouthW,mouthY);
+  ctx.quadraticCurveTo(cx+mouthW-8,mouthY+22,cx-mouthW+8,mouthY+22);
+  ctx.fill();
+
+  // Mouth corners
+  ctx.fillStyle='#a03030';
+  ctx.beginPath(); ctx.arc(cx-mouthW,mouthY,5,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+mouthW,mouthY,5,0,Math.PI*2); ctx.fill();
+
+  // Nasolabial folds
+  ctx.strokeStyle='rgba(0,0,0,.15)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(cx-30,noseBot+5); ctx.quadraticCurveTo(cx-50,mouthY-10,cx-mouthW-4,mouthY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+30,noseBot+5); ctx.quadraticCurveTo(cx+50,mouthY-10,cx+mouthW+4,mouthY); ctx.stroke();
+
+  // Ears
+  function drawEarSmile(ex, flip){
+    ctx.fillStyle='#d4956a';
+    ctx.beginPath(); ctx.ellipse(ex,eyeY+30,18,34,flip?-0.1:0.1,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(ex,eyeY+30,10,20,flip?-0.1:0.1,0,Math.PI*2); ctx.stroke();
+  }
+  drawEarSmile(cx-faceW/2+6,false);
+  drawEarSmile(cx+faceW/2-6,true);
+
+  // Label
+  ctx.fillStyle='rgba(0,0,0,.4)'; ctx.font='12px monospace';
+  ctx.fillText('Demo Patient — Full Smile  |  Slight midline deviation',20,H-20);
+}
+
+// ── Render and download ─────────────────────────────────────────────────────
+function dl(canvasId, filename){
+  const cvs=document.getElementById(canvasId);
+  const link=document.createElement('a');
+  link.download=filename;
+  link.href=cvs.toDataURL('image/jpeg',0.95);
+  link.click();
+}
+function dlAll(){
+  setTimeout(()=>dl('c1','demo_frontal.jpg'),0);
+  setTimeout(()=>dl('c2','demo_profile.jpg'),400);
+  setTimeout(()=>dl('c3','demo_smile.jpg'),800);
+}
+
+// Draw on load
+window.addEventListener('load',()=>{
+  drawFrontal(document.getElementById('c1'));
+  drawProfile(document.getElementById('c2'));
+  drawSmile(document.getElementById('c3'));
+});
+</script>
+</body>
+</html>

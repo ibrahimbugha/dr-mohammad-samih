@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 font-sans;
+  }
+
+  /* Prevent konva canvas from overflowing */
+  canvas {
+    outline: none;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-blue-600 text-white rounded-lg font-medium
+           hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40
+           disabled:cursor-not-allowed transition-colors;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-white text-gray-700 border border-gray-300
+           rounded-lg font-medium hover:bg-gray-50 transition-colors;
+  }
+
+  .btn-danger {
+    @apply px-4 py-2 bg-red-600 text-white rounded-lg font-medium
+           hover:bg-red-700 transition-colors;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-5;
+  }
+
+  .badge-normal    { @apply px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800; }
+  .badge-borderline{ @apply px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800; }
+  .badge-abnormal  { @apply px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800; }
+  .badge-missing   { @apply px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600; }
+}
