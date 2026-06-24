@@ -1,13 +1,11 @@
 [build]
-  command = "npm install && npm run build"
+  command = "yarn build"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
-  SKIP_DEPENDENCY_INSTALL = "true"
-  NPM_FLAGS = "--legacy-peer-deps"
 
-# ── React Router: send all routes to index.html ───────────────────────────────
+# React Router: send all routes to index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
