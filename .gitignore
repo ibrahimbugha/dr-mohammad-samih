@@ -1,35 +1,23 @@
-# Dependencies
+# Dependencies (not needed — this is a static HTML project)
 node_modules/
 
-# Build output
+# Build outputs
 dist/
 
-# Environment variables
+# Environment files
 .env
 .env.local
-.env.*.local
+*.env
 
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.Python
-venv/
-env/
-.venv/
-*.egg-info/
-dist/
-build/
-
-# Uploads (runtime data)
-uploads/
-
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/
-.idea/
-*.swp
+# Python
+__pycache__/
+*.pyc
+venv/
+uploads/
+
+# Old file (superseded by index.html)
+orthodontic-analysis.html

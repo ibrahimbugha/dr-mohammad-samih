@@ -1,13 +1,1376 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Orthodontic Photo Analysis</title>
-    <meta name="description" content="AI-assisted extraoral photo analysis for orthodontic diagnosis support." />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OrthoAnalyse — AI Orthodontic Photo Analysis</title>
+<meta name="description" content="AI-assisted orthodontic facial photograph analysis. Upload 3 extraoral photos, review AI-detected landmarks, and compute 7 clinical soft-tissue analyses."/>
+<meta name="author" content="Ibrahim AlBugha &amp; Doctor Mohammad Samih"/>
+<meta name="theme-color" content="#0f172a"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⬡</text></svg>"/>
+<meta property="og:title" content="OrthoAnalyse — AI Orthodontic Photo Analysis"/>
+<meta property="og:description" content="Decision-support tool for orthodontic soft-tissue analysis. Doctor-in-the-loop, fully browser-based, no data leaves your device."/>
+<meta property="og:type" content="website"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f4f8;color:#1e293b;min-height:100vh;-webkit-font-smoothing:antialiased}
+:root{
+  --blue:#2563eb;--blue-dark:#1d4ed8;--blue-light:#eff6ff;--blue-border:#bfdbfe;
+  --green:#16a34a;--green-light:#f0fdf4;--green-border:#bbf7d0;
+  --amber:#d97706;--amber-light:#fffbeb;--amber-border:#fde68a;
+  --red:#dc2626;--red-light:#fef2f2;--red-border:#fecaca;
+  --purple:#7c3aed;--purple-light:#f5f3ff;--purple-border:#ddd6fe;
+  --navy:#0f172a;--navy2:#1e293b;
+  --gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;
+  --gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--gray-900:#0f172a;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.10),0 2px 4px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 28px rgba(0,0,0,.12),0 4px 8px rgba(0,0,0,.06);
+}
+
+/* ── Header ── */
+.hdr{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:0 28px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;height:58px;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.hdr-logo-wrap{display:flex;align-items:center;gap:10px;text-decoration:none}
+.hdr-logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(59,130,246,.4);flex-shrink:0}
+.hdr-title{font-weight:800;font-size:16px;color:#fff;letter-spacing:-.02em}
+.hdr-sep{width:1px;height:20px;background:rgba(255,255,255,.15);margin:0 4px}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:.02em;font-weight:500}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.hdr-badge{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:4px 10px;font-size:11px;color:rgba(255,255,255,.55);font-weight:500}
+.hdr-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;flex-shrink:0;animation:pulse-dot 2.2s ease-in-out infinite}
+.hdr-archive-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;background:rgba(255,255,255,.10);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.18);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;letter-spacing:.01em}
+.hdr-archive-btn:hover{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.35)}
+
+/* ── Progress bar ── */
+.pbar{background:#fff;border-bottom:1px solid var(--gray-100);padding:0 28px;overflow-x:auto;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.psteps{display:flex;align-items:center;list-style:none;gap:0;white-space:nowrap;height:48px}
+.step{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;border-radius:8px;padding:5px 8px;transition:all .18s;letter-spacing:.01em}
+.step-n{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;transition:all .18s}
+.step.done{color:#15803d;cursor:pointer}.step.done:hover{background:#f0fdf4}.step.done .step-n{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;box-shadow:0 2px 6px rgba(22,163,74,.3)}
+.step.active{color:#1d4ed8}.step.active .step-n{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.35)}
+.step.pending{color:var(--gray-400)}.step.pending .step-n{background:var(--gray-200);color:var(--gray-500)}
+.step-arr{color:var(--gray-300);margin:0 4px;font-size:11px}
+
+/* ── Layout ── */
+.main{max-width:1100px;margin:0 auto;padding:28px 24px}
+.card{background:#fff;border-radius:14px;border:1px solid var(--gray-200);padding:20px;box-shadow:var(--shadow-sm)}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .16s;line-height:1.2;letter-spacing:.01em}
+.btn-primary{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.30)}.btn-primary:hover{background:linear-gradient(135deg,#2563eb,#1d4ed8);box-shadow:0 4px 14px rgba(37,99,235,.40);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-secondary{background:#fff;color:var(--gray-700);border:1.5px solid var(--gray-200);box-shadow:var(--shadow-sm)}.btn-secondary:hover{background:var(--gray-50);border-color:var(--gray-300)}
+.btn-danger{background:#fff;color:var(--red);border:1.5px solid var(--red-border)}.btn-danger:hover{background:var(--red-light)}
+.btn-ghost{background:none;border:none;color:var(--gray-500);cursor:pointer;padding:4px 8px;border-radius:7px;font-size:12px;font-weight:500}.btn-ghost:hover{background:var(--gray-100);color:var(--gray-700)}
+.btn-add{background:var(--green-light);color:var(--green);border:1.5px solid var(--green-border)}.btn-add:hover{background:#dcfce7}.btn-add.active{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border-color:transparent}
+.btn-lg{padding:12px 24px;font-size:14px;border-radius:10px}
+.btn-pdf{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;box-shadow:0 2px 8px rgba(220,38,38,.25)}.btn-pdf:hover{background:linear-gradient(135deg,#dc2626,#b91c1c);transform:translateY(-1px)}
+.btn-xlsx{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.25)}.btn-xlsx:hover{background:linear-gradient(135deg,#16a34a,#15803d);transform:translateY(-1px)}
+
+/* ── Upload ── */
+.upload-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+@media(max-width:700px){.upload-grid{grid-template-columns:1fr}}
+.drop-zone{border:2px dashed var(--gray-300);border-radius:12px;height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;text-align:center;padding:16px;user-select:none;background:var(--gray-50)}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--blue);background:var(--blue-light);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.drop-zone input{display:none}
+.drop-zone .dz-icon{font-size:36px;margin-bottom:10px;opacity:.7}
+.drop-zone p{font-size:13px;font-weight:600;color:var(--gray-600)}
+.drop-zone small{font-size:11px;color:var(--gray-400);margin-top:5px}
+.preview-wrap{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--gray-200);box-shadow:var(--shadow-sm)}
+.preview-wrap img{width:100%;height:190px;object-fit:cover;display:block}
+.preview-ok{position:absolute;bottom:0;inset-x:0;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-size:11px;font-weight:600;text-align:center;padding:5px 6px;letter-spacing:.02em}
+.preview-rm{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:7px;padding:5px 9px;font-size:11px;cursor:pointer;font-weight:600;backdrop-filter:blur(4px)}
+.slot-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;font-size:11px;font-weight:700;flex-shrink:0;box-shadow:0 2px 6px rgba(37,99,235,.3)}
+.guide-toggle{font-size:11px;color:var(--blue);cursor:pointer;background:none;border:none;padding:0;font-weight:600;flex-shrink:0}
+.guide-box{background:var(--blue-light);border:1px solid var(--blue-border);border-radius:10px;padding:12px;margin-top:8px;font-size:11px;color:#1e40af;line-height:1.5}
+.guide-box li{display:flex;gap:6px;margin-bottom:4px}
+
+/* ── Editor ── */
+.editor-layout{display:flex;gap:14px}
+@media(max-width:700px){.editor-layout{flex-direction:column}}
+.canvas-wrap{flex:1;background:#111;border-radius:12px;border:1px solid var(--gray-200);overflow:hidden;position:relative;min-height:300px}
+canvas{display:block}
+.sidebar{width:210px;flex-shrink:0;display:flex;flex-direction:column;gap:10px}
+@media(max-width:700px){.sidebar{width:100%}}
+.lm-list{overflow-y:auto;max-height:400px;display:flex;flex-direction:column;gap:1px}
+.lm-item{display:flex;align-items:center;gap:5px;padding:4px 7px;border-radius:6px;font-size:11px;cursor:pointer;border:1px solid transparent;transition:background .1s}
+.lm-item:hover{background:var(--gray-100)}.lm-item.sel{background:#eff6ff;border-color:var(--blue-border);color:#1d4ed8}
+.lm-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.lm-id{font-family:monospace;color:var(--gray-400);font-size:10px;min-width:36px}
+.lm-name{color:var(--gray-700);font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lm-conf{font-size:10px;flex-shrink:0}
+.cat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);padding:5px 7px 2px;display:flex;align-items:center;justify-content:space-between}
+.detail-box{border:1px solid var(--gray-200);border-radius:8px;padding:10px;font-size:11px}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.legend{display:flex;gap:8px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--gray-700)}
+.leg-dot{width:8px;height:8px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2)}
+.cb-lbl{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--gray-700);cursor:pointer;user-select:none}
+.size-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-600)}
+.size-wrap input[type=range]{width:70px;accent-color:var(--blue)}
+.add-banner{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;font-size:12px;color:#166534;display:flex;align-items:center;gap:8px}
+.confirm-strip{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}
+.det-overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border-radius:12px;z-index:10}
+.det-overlay p{color:#fff;font-size:13px;font-weight:500}
+.add-picker{background:#fff;border:1px solid var(--gray-200);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto}
+.add-pick-item{display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:6px;cursor:pointer;font-size:11px;border:1px solid transparent}
+.add-pick-item:hover{background:var(--blue-light);border-color:var(--blue-border);color:var(--blue)}
+.add-pick-item.active{background:var(--blue);color:#fff}
+
+/* ── Results ── */
+.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.results-grid{grid-template-columns:1fr}}
+.rcard{background:#fff;border-radius:14px;border:1px solid var(--gray-200);padding:18px;box-shadow:var(--shadow-sm);transition:box-shadow .18s}
+.rcard:hover{box-shadow:0 8px 24px rgba(37,99,235,.10),0 2px 8px rgba(0,0,0,.06);border-color:#dbeafe}
+.rcard.wide{grid-column:span 2}
+@media(max-width:700px){.rcard.wide{grid-column:span 1}}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--gray-100)}
+.rcard h3{font-size:13px;font-weight:700;color:var(--gray-700);letter-spacing:.02em;text-transform:uppercase}
+.meas-table{width:100%;border-collapse:collapse;font-size:12px}
+.meas-table td{padding:6px 0;vertical-align:middle}
+.meas-table td:first-child{color:var(--gray-600);padding-right:10px;width:58%;font-weight:500}
+.meas-table td:nth-child(2){font-family:'Inter',monospace;font-weight:700;white-space:nowrap;color:var(--gray-900)}
+.meas-table td:nth-child(3){color:var(--gray-400);font-size:11px;padding-left:8px}
+.meas-table tr+tr td{border-top:1px solid var(--gray-50)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.02em}
+.bn{background:linear-gradient(135deg,#dcfce7,#d1fae5);color:#15803d;border:1px solid #bbf7d0;box-shadow:0 1px 3px rgba(21,128,61,.12)}.bb{background:linear-gradient(135deg,#fef9c3,#fef3c7);color:#854d0e;border:1px solid #fde68a;box-shadow:0 1px 3px rgba(133,77,14,.10)}
+.ba{background:linear-gradient(135deg,#fee2e2,#fecaca);color:#b91c1c;border:1px solid #fca5a5;box-shadow:0 1px 3px rgba(185,28,28,.10)}.bm{background:var(--gray-100);color:var(--gray-500);border:1px solid var(--gray-200)}
+.thirds-bar{background:var(--gray-100);border-radius:999px;height:8px;overflow:hidden;margin-top:4px}
+.class-I{background:#dcfce7;color:#15803d}.class-II{background:#fef9c3;color:#854d0e}.class-III{background:#fee2e2;color:#b91c1c}
+.note-box{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:11px;color:#92400e;margin-top:10px;line-height:1.5}
+.kf{background:linear-gradient(135deg,#eff6ff,#f0f9ff);border:1px solid #bfdbfe;border-radius:16px;padding:20px 24px;margin-bottom:20px;box-shadow:var(--shadow-sm)}
+.kf h2{font-size:13px;font-weight:700;color:#1e40af;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:8px}
+.kf-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;margin-bottom:8px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.7)}
+.kf-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.kf-text{flex:1;line-height:1.5;font-weight:500}
+.kf-text.normal{color:#15803d}.kf-text.borderline{color:#92400e}.kf-text.abnormal{color:#b91c1c}.kf-text.info{color:#1e40af}
+.disclaimer{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:16px 18px;font-size:11px;color:var(--gray-500);margin-top:24px;line-height:1.7}
+.pid-input{border:1.5px solid var(--gray-200);border-radius:8px;padding:7px 12px;font-size:14px;width:180px;outline:none;font-family:'Inter',monospace;font-weight:600}
+.pid-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.error-banner{background:var(--red-light);border:1px solid var(--red-border);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--red);display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-weight:500}
+
+/* ── Archive / Library ── */
+.archive-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px;margin-top:20px}
+.archive-card{background:#fff;border:1.5px solid var(--gray-200);border-radius:16px;padding:20px;cursor:pointer;transition:all .18s;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.archive-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3b82f6,#6366f1);opacity:0;transition:opacity .18s}
+.archive-card:hover{border-color:#bfdbfe;box-shadow:0 8px 24px rgba(37,99,235,.12),0 2px 6px rgba(0,0,0,.06);transform:translateY(-3px)}.archive-card:hover::before{opacity:1}
+.archive-pid{font-size:20px;font-weight:800;color:var(--gray-900);font-family:'Inter',monospace;letter-spacing:-.02em}
+.archive-ts{font-size:11px;color:var(--gray-400);margin-top:3px;margin-bottom:12px;font-weight:500}
+.archive-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.archive-del{position:absolute;top:12px;right:12px;background:none;border:none;font-size:14px;cursor:pointer;color:var(--gray-300);padding:5px;border-radius:7px;line-height:1;transition:all .15s}
+.archive-del:hover{background:var(--red-light);color:var(--red)}
+.archive-empty{text-align:center;padding:80px 20px;color:var(--gray-400)}
+.archive-empty .empty-icon{font-size:56px;margin-bottom:14px;opacity:.6}
+.archive-search{border:1.5px solid var(--gray-200);border-radius:10px;padding:9px 14px;font-size:13px;width:100%;max-width:340px;outline:none;font-weight:500;transition:border-color .15s}
+.archive-search:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+
+/* ── Branding watermark ── */
+.branding{position:fixed;bottom:16px;right:18px;z-index:999;pointer-events:none;user-select:none;text-align:right}
+.branding-inner{background:rgba(15,23,42,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:8px 13px;display:inline-block}
+.branding-line1{font-size:10px;color:rgba(255,255,255,.70);letter-spacing:.05em;font-weight:700;text-transform:uppercase;white-space:nowrap;line-height:1.6;display:block}
+.branding-line2{font-size:9.5px;color:rgba(255,255,255,.38);letter-spacing:.05em;font-weight:500;text-transform:uppercase;white-space:nowrap;line-height:1.4;display:block;margin-top:1px}
+.branding .heart{color:#fb7185;font-size:11px;vertical-align:middle}
+
+/* ── Spinners ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse-dot{0%,100%{box-shadow:0 0 4px #22c55e;opacity:1}50%{box-shadow:0 0 10px #22c55e,0 0 18px rgba(34,197,94,.4);opacity:.85}}
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+.spinner-lg{width:40px;height:40px;border:4px solid var(--blue-border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+.spinner-sm{width:13px;height:13px;border:2px solid var(--gray-300);border-top-color:var(--blue);border-radius:50%;animation:spin .6s linear infinite;display:inline-block;vertical-align:middle}
+
+/* ── Print ── */
+@media print{
+  .hdr,.pbar,.no-print{display:none!important}
+  body{background:#fff;font-family:'Inter',system-ui,sans-serif}
+  .main{padding:10mm 14mm;max-width:100%}
+  .branding{position:fixed;bottom:6mm;right:8mm;pointer-events:none;text-align:right}
+  .branding-inner{background:none;border:none;backdrop-filter:none;padding:0}
+  .branding-line1{font-size:7.5pt;color:#94a3b8;font-weight:600;letter-spacing:.06em;text-transform:uppercase;display:block}
+  .branding-line2{font-size:7pt;color:#cbd5e1;font-weight:500;letter-spacing:.05em;text-transform:uppercase;display:block;margin-top:1px}
+  .branding .heart{color:#e11d48}
+  .rcard,.kf,.disclaimer{break-inside:avoid;box-shadow:none!important;border:1px solid #e2e8f0!important}
+  .rcard:hover{transform:none!important;box-shadow:none!important}
+  .kf{background:#eff6ff!important}
+  body{background:#fff}
+  .results-grid{grid-template-columns:1fr 1fr}
+  .rcard.wide{grid-column:span 2}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── Category colours ───────────────────────────────────────────────────────────
+const CATS = {
+  skeletal:   { fill:'#3b82f6', stroke:'#1d4ed8', label:'Skeletal' },
+  dental:     { fill:'#eab308', stroke:'#a16207', label:'Dental' },
+  soft_tissue:{ fill:'#22c55e', stroke:'#15803d', label:'Soft Tissue' },
+};
+
+// ── Landmark definitions ───────────────────────────────────────────────────────
+const LM_FRONTAL = [
+  {id:'Gl',  name:'Glabella',           nx:.500,ny:.165,cat:'skeletal'},
+  {id:'N',   name:'Nasion',             nx:.500,ny:.222,cat:'skeletal'},
+  {id:'ExR', name:'Outer Canthus (R)',  nx:.318,ny:.252,cat:'soft_tissue'},
+  {id:'EnR', name:'Inner Canthus (R)',  nx:.418,ny:.255,cat:'soft_tissue'},
+  {id:'EnL', name:'Inner Canthus (L)',  nx:.582,ny:.255,cat:'soft_tissue'},
+  {id:'ExL', name:'Outer Canthus (L)', nx:.682,ny:.252,cat:'soft_tissue'},
+  {id:'Prn', name:'Nasal Tip',          nx:.500,ny:.395,cat:'soft_tissue'},
+  {id:'AlR', name:'Alar Base (R)',      nx:.432,ny:.422,cat:'soft_tissue'},
+  {id:'AlL', name:'Alar Base (L)',      nx:.568,ny:.422,cat:'soft_tissue'},
+  {id:'Sn',  name:'Subnasale',          nx:.500,ny:.448,cat:'soft_tissue'},
+  {id:'Ls',  name:'Upper Lip',          nx:.500,ny:.510,cat:'soft_tissue'},
+  {id:'ChR', name:'Mouth Corner (R)',   nx:.415,ny:.524,cat:'soft_tissue'},
+  {id:'ChL', name:'Mouth Corner (L)',  nx:.585,ny:.524,cat:'soft_tissue'},
+  {id:'Li',  name:'Lower Lip',          nx:.500,ny:.558,cat:'soft_tissue'},
+  {id:'Me',  name:"Menton (Me')",       nx:.500,ny:.740,cat:'skeletal'},
+];
+const LM_PROFILE = [
+  {id:'Gl_p',  name:'Glabella',              nx:.468,ny:.178,cat:'skeletal'},
+  {id:'N_p',   name:'Soft Tissue Nasion',    nx:.448,ny:.222,cat:'skeletal'},
+  {id:'Prn_p', name:'Pronasale (Nasal Tip)', nx:.338,ny:.368,cat:'soft_tissue'},
+  {id:'Cm',    name:'Columella',             nx:.370,ny:.402,cat:'soft_tissue'},
+  {id:'Sn_p',  name:'Subnasale',             nx:.388,ny:.432,cat:'soft_tissue'},
+  {id:'Ls_p',  name:'Upper Lip',             nx:.362,ny:.500,cat:'soft_tissue'},
+  {id:'Sto',   name:'Stomion',               nx:.378,ny:.528,cat:'soft_tissue'},
+  {id:'Li_p',  name:'Lower Lip',             nx:.375,ny:.558,cat:'soft_tissue'},
+  {id:'B_p',   name:'Soft Tissue B Point',   nx:.398,ny:.618,cat:'skeletal'},
+  {id:'Pog_p', name:'Soft Tissue Pogonion',  nx:.384,ny:.656,cat:'skeletal'},
+  {id:'Me_p',  name:"Menton (Me')",          nx:.408,ny:.708,cat:'skeletal'},
+  {id:'T',     name:'Tragus of Ear',         nx:.758,ny:.338,cat:'soft_tissue'},
+];
+const LM_SMILE = [
+  {id:'ChR_s', name:'Mouth Corner (R)',       nx:.345,ny:.528,cat:'soft_tissue'},
+  {id:'ChL_s', name:'Mouth Corner (L)',       nx:.655,ny:.528,cat:'soft_tissue'},
+  {id:'UI_R',  name:'Upper Incisor Edge (R)', nx:.488,ny:.518,cat:'dental'},
+  {id:'UI_L',  name:'Upper Incisor Edge (L)', nx:.512,ny:.518,cat:'dental'},
+  {id:'LI_R',  name:'Lower Incisor Edge (R)', nx:.488,ny:.552,cat:'dental'},
+  {id:'LI_L',  name:'Lower Incisor Edge (L)', nx:.512,ny:.552,cat:'dental'},
+  {id:'LL_mid',name:'Lower Lip Midpoint',     nx:.500,ny:.590,cat:'soft_tissue'},
+  {id:'UDM_s', name:'Upper Dental Midline',   nx:.500,ny:.524,cat:'dental'},
+  {id:'BCR',   name:'Buccal Corridor (R)',    nx:.278,ny:.534,cat:'dental'},
+  {id:'BCL',   name:'Buccal Corridor (L)',    nx:.722,ny:.534,cat:'dental'},
+];
+const LM_MAP = { frontal:LM_FRONTAL, profile:LM_PROFILE, smile:LM_SMILE };
+
+const PHOTO_CONFIGS = [
+  { id:'frontal', label:'Frontal (Rest)', desc:'Face forward, lips relaxed',
+    guide:['Patient facing camera directly (no head tilt)','Lips at rest — not smiling','Natural Head Position: eyes on horizon','Camera at eye level','Even shadow-free lighting','Plain background'] },
+  { id:'profile', label:'Profile (Rest)', desc:'Facing 90°, lips relaxed',
+    guide:['True profile — exactly 90° to camera','Full ear visible (tragus in frame)','Hair off the face','Lips at rest','Camera at eye level'] },
+  { id:'smile',   label:'Full Smile',    desc:'Natural full smile',
+    guide:['Full natural smile — not forced','Facing camera directly','Upper and lower teeth visible','Buccal corridors visible','Lips relaxed to show incisor edges'] },
+];
+
+const STEPS = [
+  {key:'upload',         label:'Upload'},
+  {key:'review-frontal', label:'Frontal'},
+  {key:'review-profile', label:'Profile'},
+  {key:'review-smile',   label:'Smile'},
+  {key:'results',        label:'Results'},
+];
+const REVIEW_STAGES = ['review-frontal','review-profile','review-smile'];
+const PHOTO_KEYS    = ['frontal','profile','smile'];
+
+// ── Archive (localStorage) ────────────────────────────────────────────────────
+const ARCHIVE_KEY = 'ortho_archive_v1';
+function loadArchive(){
+  try{return JSON.parse(localStorage.getItem(ARCHIVE_KEY)||'[]');}catch{return [];}
+}
+function saveToArchive(record){
+  const arr=loadArchive();
+  const idx=arr.findIndex(r=>r.pid===record.pid);
+  if(idx>=0) arr[idx]=record; else arr.unshift(record);
+  localStorage.setItem(ARCHIVE_KEY,JSON.stringify(arr));
+}
+function deleteFromArchive(pid){
+  const arr=loadArchive().filter(r=>r.pid!==pid);
+  localStorage.setItem(ARCHIVE_KEY,JSON.stringify(arr));
+}
+
+// ── Face detection ─────────────────────────────────────────────────────────────
+async function detectAndRefine(imgEl, photoType){
+  const defs=LM_MAP[photoType];
+  const W=imgEl.naturalWidth,H=imgEl.naturalHeight;
+  let lms=defs.map(d=>({...d,x:d.nx*W,y:d.ny*H,confidence:.60}));
+  if(photoType==='profile') return lms;
+  if(typeof window.FaceDetector==='undefined') return lms;
+  try{
+    const detector=new window.FaceDetector({fastMode:false});
+    const faces=await detector.detect(imgEl);
+    if(!faces.length) return lms;
+    const face=faces[0];
+    const{x:bx,y:by,width:bw,height:bh}=face.boundingBox;
+    if(bw<W*.08||bh<H*.08) return lms;
+    const ldms=face.landmarks||[];
+    const eyes=ldms.filter(l=>l.type==='eye');
+    const noseL=ldms.find(l=>l.type==='nose');
+    const mouthL=ldms.find(l=>l.type==='mouth');
+    if(eyes.length<2) return lms;
+    eyes.sort((a,b)=>a.locations[0].x-b.locations[0].x);
+    const eR=eyes[0].locations[0],eL=eyes[1].locations[0];
+    const eyeOk=(e)=>e.x>bx-20&&e.x<bx+bw+20&&e.y>by-20&&e.y<by+bh+20;
+    if(!eyeOk(eR)||!eyeOk(eL)) return lms;
+    const eyeSpan=eL.x-eR.x;
+    if(eyeSpan<20) return lms;
+    const ew=eyeSpan*.17,cx=(eR.x+eL.x)/2,ey=(eR.y+eL.y)/2;
+    let nX=cx,nY=ey+eyeSpan*.72;
+    if(noseL){const np=noseL.locations[0];if(np.y>ey+10&&np.y<by+bh&&np.x>bx&&np.x<bx+bw){nX=np.x;nY=np.y;}}
+    let mX=cx,mY=ey+eyeSpan*1.18;
+    if(mouthL){const mp=mouthL.locations[0];if(mp.y>nY+10&&mp.y<by+bh&&mp.x>bx&&mp.x<bx+bw){mX=mp.x;mY=mp.y;}}
+    const ic=eyeSpan*.14;
+    function clamp(x,y){return[Math.max(bx,Math.min(bx+bw,x)),Math.max(by,Math.min(by+bh,y))];}
+    if(photoType==='frontal'){
+      const pts={
+        'Gl':clamp(cx,by+bh*.04),'N':clamp(cx,ey-eyeSpan*.09),
+        'ExR':clamp(eR.x-ew,eR.y),'EnR':clamp(eR.x+ew,eR.y+1),
+        'EnL':clamp(eL.x-ew,eL.y+1),'ExL':clamp(eL.x+ew,eL.y),
+        'Prn':clamp(nX,nY),'AlR':clamp(nX-ic,nY+eyeSpan*.08),'AlL':clamp(nX+ic,nY+eyeSpan*.08),
+        'Sn':clamp(nX,nY+eyeSpan*.20),'Ls':clamp(mX,mY-5),
+        'ChR':clamp(mX-eyeSpan*.28,mY),'ChL':clamp(mX+eyeSpan*.28,mY),
+        'Li':clamp(mX,mY+6),'Me':clamp(cx,by+bh*.97),
+      };
+      return lms.map(lm=>{const p=pts[lm.id];return p?{...lm,x:p[0],y:p[1],confidence:.90}:lm;});
+    }
+    if(photoType==='smile'){
+      const mw=eyeSpan*.42;
+      const pts={
+        'ChR_s':clamp(mX-mw,mY),'ChL_s':clamp(mX+mw,mY),
+        'UI_R':clamp(mX-5,mY-5),'UI_L':clamp(mX+5,mY-5),
+        'LI_R':clamp(mX-5,mY+6),'LI_L':clamp(mX+5,mY+6),
+        'LL_mid':clamp(mX,mY+16),'UDM_s':clamp(mX,mY-3),
+        'BCR':clamp(mX-mw*1.55,mY),'BCL':clamp(mX+mw*1.55,mY),
+      };
+      return lms.map(lm=>{const p=pts[lm.id];return p?{...lm,x:p[0],y:p[1],confidence:.85}:lm;});
+    }
+  }catch(e){console.warn('FaceDetector:',e.message);}
+  return lms;
+}
+
+// ── Geometry & analysis helpers ────────────────────────────────────────────────
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function angleDeg(a,b,c){
+  const ax=a.x-b.x,ay=a.y-b.y,cx=c.x-b.x,cy=c.y-b.y;
+  const dot=ax*cx+ay*cy,ma=Math.hypot(ax,ay),mc=Math.hypot(cx,cy);
+  if(!ma||!mc)return null;
+  return Math.round(Math.acos(Math.max(-1,Math.min(1,dot/(ma*mc))))*180/Math.PI*10)/10;
+}
+function ptLineSigned(px,py,ax,ay,bx,by){
+  const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy);
+  if(!len)return 0;
+  return((py-ay)*dx-(px-ax)*dy)/len;
+}
+function g(lms,id){return lms.find(l=>l.id===id)}
+function r1(v){return v!==null&&v!==undefined?Math.round(v*10)/10:null}
+
+function calibScale(frontal,ipdMm){
+  const exR=g(frontal,'ExR'),exL=g(frontal,'ExL');
+  if(exR&&exL){const d=dist(exR,exL)*.70;if(d>0)return ipdMm/d}
+  const alR=g(frontal,'AlR'),alL=g(frontal,'AlL');
+  if(alR&&alL){const d=dist(alR,alL);if(d>0)return 35/d}
+  return null;
+}
+function analyseSymmetry(frontal,sc){
+  const gl=g(frontal,'Gl'),sn=g(frontal,'Sn'),me=g(frontal,'Me');
+  const prn=g(frontal,'Prn'),alR=g(frontal,'AlR'),alL=g(frontal,'AlL');
+  const chR=g(frontal,'ChR'),chL=g(frontal,'ChL'),enR=g(frontal,'EnR'),enL=g(frontal,'EnL');
+  const mx=gl?gl.x:sn?sn.x:null;
+  if(!mx)return{flag:'missing_data'};
+  const chinDev=   (me&&sc)?r1(Math.abs(me.x-mx)*sc):null;
+  const noseDev=   (prn&&sc)?r1(Math.abs(prn.x-mx)*sc):null;
+  const alarAsym=  (alR&&alL&&sc)?r1(Math.abs((alR.x+alL.x)/2-mx)*sc):null;
+  const mouthAsym= (chR&&chL&&sc)?r1(Math.abs((chR.x+chL.x)/2-mx)*sc):null;
+  const canthAsym= (enR&&enL&&sc)?r1(Math.abs((enR.x+enL.x)/2-mx)*sc):null;
+  const vals=[chinDev,noseDev,alarAsym,mouthAsym,canthAsym].filter(v=>v!==null);
+  const flag=!vals.length?'missing_data':vals.some(v=>v>2)?'abnormal':vals.some(v=>v>1.5)?'borderline':'within_normal_limits';
+  return{chinDev,noseDev,alarAsym,mouthAsym,canthAsym,flag};
+}
+function analyseThirds(frontal,sc){
+  const gl=g(frontal,'Gl'),sn=g(frontal,'Sn'),me=g(frontal,'Me');
+  if(!gl||!sn||!me)return{flag:'missing_data'};
+  const total=me.y-gl.y;if(total<=0)return{flag:'missing_data'};
+  const midPct=r1((sn.y-gl.y)/total*100),lowPct=r1((me.y-sn.y)/total*100),upPct=r1(100-midPct-lowPct);
+  const maxDev=Math.max(Math.abs(midPct-33.3),Math.abs(lowPct-33.3));
+  return{upPct,midPct,lowPct,flag:maxDev>5?'abnormal':maxDev>3?'borderline':'within_normal_limits'};
+}
+function analyseSkeletal(profile,sc){
+  const prn=g(profile,'Prn_p'),sn=g(profile,'Sn_p'),ls=g(profile,'Ls_p');
+  const li=g(profile,'Li_p'),pog=g(profile,'Pog_p'),cm=g(profile,'Cm');
+  const nasolabial=cm&&sn&&ls?angleDeg(cm,sn,ls):null;
+  let upperE=null,lowerE=null,pogSn=null;
+  if(prn&&pog&&ls&&li&&sc){upperE=r1(ptLineSigned(ls.x,ls.y,prn.x,prn.y,pog.x,pog.y)*sc);lowerE=r1(ptLineSigned(li.x,li.y,prn.x,prn.y,pog.x,pog.y)*sc);}
+  if(pog&&sn&&sc)pogSn=r1((pog.x-sn.x)*sc);
+  let cls='Class I';
+  if(lowerE!==null){if(lowerE>1)cls='Class III tendency';else if(lowerE<-4)cls='Class II tendency';}
+  return{cls,nasolabial,upperE,lowerE,pogSn};
+}
+function analyseLip(profile,sc){
+  const sn=g(profile,'Sn_p'),sto=g(profile,'Sto'),li=g(profile,'Li_p');
+  const me=g(profile,'Me_p'),cm=g(profile,'Cm'),ls=g(profile,'Ls_p');
+  const b=g(profile,'B_p'),pog=g(profile,'Pog_p'),prn=g(profile,'Prn_p');
+  const mm=(v)=>v!==null&&sc?r1(v*sc):null;
+  const ulLen=sn&&sto?mm(dist(sn,sto)):null;
+  const llLen=sto&&me?mm(dist(sto,me)):null;
+  const gap=ls&&li?Math.max(0,mm(li.y-ls.y)):null;
+  const nasolabial=cm&&sn&&ls?angleDeg(cm,sn,ls):null;
+  const mentolabial=li&&b&&pog?angleDeg(li,b,pog):null;
+  let upperE=null,lowerE=null;
+  if(prn&&pog&&ls&&li&&sc){upperE=r1(ptLineSigned(ls.x,ls.y,prn.x,prn.y,pog.x,pog.y)*sc);lowerE=r1(ptLineSigned(li.x,li.y,prn.x,prn.y,pog.x,pog.y)*sc);}
+  const flags=[];
+  if(ulLen&&(ulLen<19||ulLen>24))flags.push(1);
+  if(gap!==null&&gap>3)flags.push(1);
+  if(nasolabial&&(nasolabial<90||nasolabial>110))flags.push(1);
+  const flag=flags.length>=2?'abnormal':flags.length?'borderline':'within_normal_limits';
+  return{ulLen,llLen,gap,nasolabial,mentolabial,upperE,lowerE,flag};
+}
+function analyseSmile(smile,sc){
+  const uiR=g(smile,'UI_R'),uiL=g(smile,'UI_L');
+  const chR=g(smile,'ChR_s'),chL=g(smile,'ChL_s'),bcR=g(smile,'BCR'),bcL=g(smile,'BCL');
+  let arc='indeterminate';
+  if(uiR&&uiL&&chR&&chL){
+    const diff=(uiR.y+uiL.y)/2-(chR.y+chL.y)/2;
+    const thresh=sc?3/sc:5;
+    arc=diff>thresh?'consonant':diff>-thresh?'flat':'reverse';
+  }
+  let bcLeft=null,bcRight=null;
+  if(chR&&chL&&bcR&&bcL){
+    const sw=chL.x-chR.x;
+    if(sw>0){bcRight=r1((chR.x-bcR.x)/sw*100);bcLeft=r1((bcL.x-chL.x)/sw*100);}
+  }
+  const bcFlags=[bcLeft,bcRight].filter(v=>v!==null&&(v<10||v>15)).length;
+  const flag=arc==='reverse'||bcFlags===2?'abnormal':arc==='flat'||bcFlags?'borderline':'within_normal_limits';
+  return{arc,bcLeft,bcRight,flag};
+}
+function analyseMidline(frontal,smile,sc){
+  const gl=g(frontal,'Gl'),mx=gl?gl.x:null;
+  const udm=g(smile,'UDM_s');
+  const udmDev=udm&&mx&&sc?r1(Math.abs(udm.x-mx)*sc):null;
+  const flag=udmDev&&udmDev>2?'abnormal':udmDev&&udmDev>1?'borderline':'within_normal_limits';
+  return{udmDev,ldmDev:null,shift:null,flag};
+}
+function analyseOJ(smile,sc){
+  const uiR=g(smile,'UI_R'),uiL=g(smile,'UI_L'),liR=g(smile,'LI_R'),liL=g(smile,'LI_L');
+  let oj=null,ob=null;
+  if(uiR&&liR&&uiL&&liL&&sc){
+    oj=r1((Math.abs(uiR.x-liR.x)+Math.abs(uiL.x-liL.x))/2*sc);
+    ob=r1(((liR.y-uiR.y)+(liL.y-uiL.y))/2*sc);
+  }
+  const ojCls=oj===null?'not_measured':oj<0?'reverse':oj<1?'edge_to_edge':oj<=4?'normal':oj<=6?'increased':'severely_increased';
+  const obCls=ob===null?'not_measured':ob<0?'open_bite':ob<1?'edge_to_edge':ob<=4?'normal':ob<=6?'increased':'severely_increased';
+  return{oj,ob,ojCls,obCls};
+}
+function doAnalyse(confirmed,ipdMm){
+  const sc=calibScale(confirmed.frontal,ipdMm);
+  const sym=analyseSymmetry(confirmed.frontal,sc);
+  const thirds=analyseThirds(confirmed.frontal,sc);
+  const skel=analyseSkeletal(confirmed.profile,sc);
+  const lip=analyseLip(confirmed.profile,sc);
+  const smile=analyseSmile(confirmed.smile,sc);
+  const mid=analyseMidline(confirmed.frontal,confirmed.smile,sc);
+  const oj=analyseOJ(confirmed.smile,sc);
+  const findings=[];
+  const add=(text,level)=>findings.push({text,level});
+  if(sym.flag==='abnormal') add(`Facial asymmetry: chin deviation ${sym.chinDev} mm (threshold 2 mm).`,'abnormal');
+  else if(sym.flag==='borderline') add(`Mild facial asymmetry noted.`,'borderline');
+  else if(sym.flag==='within_normal_limits') add(`Facial symmetry: within normal limits.`,'normal');
+  if(thirds.flag!=='within_normal_limits') add(`Facial thirds imbalance: middle ${thirds.midPct}%, lower ${thirds.lowPct}% (ideal 33.3%).`,thirds.flag);
+  else add(`Facial thirds: balanced (≈33% each).`,'normal');
+  if(skel.cls) add(`Soft-tissue skeletal estimate: ${skel.cls}.`,skel.cls==='Class I'?'normal':skel.cls.includes('III')?'abnormal':'borderline');
+  if(lip.flag!=='within_normal_limits'&&lip.gap!==null&&lip.gap>3) add(`Lip incompetence: interlabial gap ${lip.gap} mm at rest (norm 0–3 mm).`,lip.flag);
+  else if(lip.flag==='within_normal_limits') add(`Lip competence: within normal limits.`,'normal');
+  if(smile.arc==='flat'||smile.arc==='reverse') add(`Smile arc: ${smile.arc} (consonant preferred).`,smile.arc==='reverse'?'abnormal':'borderline');
+  else if(smile.arc==='consonant') add(`Smile arc: consonant (aesthetic ideal).`,'normal');
+  if(mid.flag!=='within_normal_limits') add(`Dental midline: UDM ${mid.udmDev??'—'} mm from facial midline.`,mid.flag);
+  if(oj.ojCls!=='normal'&&oj.ojCls!=='not_measured') add(`Overjet estimate: ${oj.oj} mm — ${oj.ojCls.replace(/_/g,' ')}.`,oj.ojCls.includes('severe')?'abnormal':'borderline');
+  if(!findings.length) add('All assessed parameters are within normal limits.','normal');
+  return{sym,thirds,skel,lip,smile,mid,oj,findings,scale:sc,ts:new Date().toLocaleString()};
+}
+
+// ── Excel export ───────────────────────────────────────────────────────────────
+function exportExcel(report,pid,ipdMm){
+  if(!window.XLSX){alert('XLSX library not loaded');return;}
+  const XLSX=window.XLSX;
+  const rows=[];
+  const row=(label,val,norm='',unit='')=>{
+    rows.push({Measurement:label, Value:val!==null&&val!==undefined?`${val}${unit?` ${unit}`:''}`:'-', Normal_Range:norm});
+  };
+  rows.push({Measurement:'=== PATIENT INFO ===',Value:'',Normal_Range:''});
+  row('Patient ID',pid);
+  row('Analysis Date',report.ts);
+  row('Calibration Scale',report.scale?`${report.scale.toFixed(3)} mm/px`:'uncalibrated');
+  row('IPD used',ipdMm,'','mm');
+  rows.push({Measurement:'',Value:'',Normal_Range:''});
+
+  rows.push({Measurement:'=== SYMMETRY ===',Value:'',Normal_Range:''});
+  row('Chin deviation from midline',report.sym.chinDev,'< 2 mm','mm');
+  row('Nasal tip deviation',report.sym.noseDev,'< 2 mm','mm');
+  row('Alar base asymmetry',report.sym.alarAsym,'< 2 mm','mm');
+  row('Mouth corner asymmetry',report.sym.mouthAsym,'< 2 mm','mm');
+  row('Canthus asymmetry',report.sym.canthAsym,'< 2 mm','mm');
+  row('Symmetry assessment',report.sym.flag.replace(/_/g,' '));
+  rows.push({Measurement:'',Value:'',Normal_Range:''});
+
+  rows.push({Measurement:'=== FACIAL THIRDS ===',Value:'',Normal_Range:''});
+  row('Upper third',report.thirds.upPct,'~33.3%','%');
+  row('Middle third (Gl→Sn)',report.thirds.midPct,'~33.3%','%');
+  row("Lower third (Sn→Me')",report.thirds.lowPct,'~33.3%','%');
+  row('Thirds assessment',report.thirds.flag?.replace(/_/g,' '));
+  rows.push({Measurement:'',Value:'',Normal_Range:''});
+
+  rows.push({Measurement:'=== SKELETAL CLASS (soft-tissue) ===',Value:'',Normal_Range:''});
+  row('Class estimate',report.skel.cls);
+  row('Nasolabial angle (Cm–Sn–Ls)',report.skel.nasolabial,'90–110°','°');
+  row('Upper lip to E-plane',report.skel.upperE,'−4 mm (Caucasian)','mm');
+  row('Lower lip to E-plane',report.skel.lowerE,'−2 mm (Caucasian)','mm');
+  row("Pog' to Sn vertical",report.skel.pogSn,'≈ 0 mm (Class I)','mm');
+  rows.push({Measurement:'',Value:'',Normal_Range:''});
+
+  rows.push({Measurement:'=== LIP COMPETENCE ===',Value:'',Normal_Range:''});
+  row('Upper lip length (Sn→Sto)',report.lip.ulLen,'19–22mm F / 20–24mm M','mm');
+  row("Lower lip length (Sto→Me')",report.lip.llLen,'38–44 mm','mm');
+  row('Interlabial gap (rest)',report.lip.gap,'0–3 mm','mm');
+  row('Nasolabial angle',report.lip.nasolabial,'90–110°','°');
+  row('Mentolabial fold angle',report.lip.mentolabial,'120–135°','°');
+  row('Upper lip to E-plane',report.lip.upperE,'−4 mm','mm');
+  row('Lower lip to E-plane',report.lip.lowerE,'−2 mm','mm');
+  row('Lip competence assessment',report.lip.flag?.replace(/_/g,' '));
+  rows.push({Measurement:'',Value:'',Normal_Range:''});
+
+  rows.push({Measurement:'=== SMILE ===',Value:'',Normal_Range:''});
+  row('Smile arc',report.smile.arc,'Consonant preferred');
+  row('Buccal corridor — left',report.smile.bcLeft,'10–15%','%');
+  row('Buccal corridor — right',report.smile.bcRight,'10–15%','%');
+  rows.push({Measurement:'',Value:'',Normal_Range:''});
+
+  rows.push({Measurement:'=== MIDLINE ===',Value:'',Normal_Range:''});
+  row('Upper dental midline deviation',report.mid.udmDev,'< 1 mm','mm');
+  rows.push({Measurement:'',Value:'',Normal_Range:''});
+
+  rows.push({Measurement:'=== OVERJET / OVERBITE ===',Value:'',Normal_Range:''});
+  row('Overjet (photographic estimate)',report.oj.oj,'2–4 mm','mm');
+  row('Overjet classification',report.oj.ojCls?.replace(/_/g,' '));
+  row('Overbite (photographic estimate)',report.oj.ob,'2–4 mm','mm');
+  row('Overbite classification',report.oj.obCls?.replace(/_/g,' '));
+  rows.push({Measurement:'',Value:'',Normal_Range:''});
+
+  rows.push({Measurement:'=== DISCLAIMER ===',Value:'This analysis is intended to assist clinical assessment and does not replace the judgment of a qualified orthodontist.',Normal_Range:''});
+
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:40},{wch:22},{wch:28}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Analysis');
+  XLSX.writeFile(wb,`OrthoAnalysis_${pid}_${new Date().toLocaleDateString('en-GB').replace(/\//g,'-')}.xlsx`);
+}
+
+// ── Landmark Editor ────────────────────────────────────────────────────────────
+const BASE_R=5;
+function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLms}){
+  const defs=LM_MAP[photoType];
+  const [lms,setLms]=useState(()=>initialLms||defs.map(d=>({...d,x:d.nx*imgW,y:d.ny*imgH,confidence:.60})));
+  const [origLms]=useState(()=>initialLms||defs.map(d=>({...d,x:d.nx*imgW,y:d.ny*imgH})));
+  const [sel,setSel]=useState(null);
+  const [hover,setHover]=useState(null);
+  const [showLabels,setShowLabels]=useState(true);
+  const [showMidline,setShowMidline]=useState(photoType==='frontal');
+  const [showGolden,setShowGolden]=useState(false);
+  const [drag,setDrag]=useState(null);
+  const [dotSize,setDotSize]=useState(1.0);
+  const [mode,setMode]=useState('normal');
+  const [addPick,setAddPick]=useState(null);
+  const [detecting,setDetecting]=useState(!initialLms);
+  const canvasRef=useRef(null),imgRef=useRef(null),drawAllRef=useRef(null),wrapRef=useRef(null);
+  const [canvasW,setCanvasW]=useState(560);
+
+  useEffect(()=>{
+    if(!wrapRef.current)return;
+    const ro=new ResizeObserver(([e])=>setCanvasW(Math.max(280,e.contentRect.width)));
+    ro.observe(wrapRef.current);return()=>ro.disconnect();
+  },[]);
+
+  const sc=Math.min(canvasW/imgW,(canvasW*.74)/imgH);
+  const dw=imgW*sc,dh=imgH*sc,ox=(canvasW-dw)/2,oy=0;
+  const canvasH=Math.round(dh);
+  const pointR=Math.max(2,Math.round(BASE_R*dotSize));
+  const toCanvas=(lm)=>({cx:ox+lm.x*sc,cy:oy+lm.y*sc});
+  const toImg=(cx,cy)=>({x:(cx-ox)/sc,y:(cy-oy)/sc});
+
+  function drawAll(){
+    const cvs=canvasRef.current;if(!cvs)return;
+    const ctx=cvs.getContext('2d');
+    ctx.clearRect(0,0,canvasW,canvasH);
+    const img=imgRef.current;
+    if(img?.complete&&img?.naturalWidth) ctx.drawImage(img,ox,oy,dw,dh);
+    else{ctx.fillStyle='#1e293b';ctx.fillRect(0,0,canvasW,canvasH);}
+
+    if(showMidline&&photoType==='frontal'){
+      const pts=['Gl','N','Sn','Me'].map(id=>lms.find(l=>l.id===id)).filter(Boolean);
+      if(pts.length>=2){
+        ctx.save();ctx.setLineDash([5,4]);ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=1.5;
+        ctx.beginPath();pts.forEach((p,i)=>{const{cx,cy}=toCanvas(p);i?ctx.lineTo(cx,cy):ctx.moveTo(cx,cy);});
+        ctx.stroke();ctx.restore();
+      }
+    }
+    if(showGolden){
+      ctx.save();ctx.globalAlpha=.55;
+      const gl=lms.find(l=>l.id==='Gl'||l.id==='Gl_p'),me=lms.find(l=>l.id==='Me'||l.id==='Me_p');
+      const exR=lms.find(l=>l.id==='ExR'),exL=lms.find(l=>l.id==='ExL');
+      if(gl&&me){
+        const fh=toCanvas(me).cy-toCanvas(gl).cy,ty=toCanvas(gl).cy;
+        ctx.strokeStyle='rgba(255,215,0,.9)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+        [ty,ty+fh/3,ty+fh*2/3,ty+fh].forEach(y=>{ctx.beginPath();ctx.moveTo(ox,y);ctx.lineTo(ox+dw,y);ctx.stroke();});
+        ctx.fillStyle='rgba(255,215,0,.9)';ctx.font='10px sans-serif';ctx.setLineDash([]);
+        ctx.fillText('Upper 1/3',ox+4,ty+fh/6);ctx.fillText('Middle 1/3',ox+4,ty+fh/2);ctx.fillText('Lower 1/3',ox+4,ty+fh*5/6);
+        const phi=1.618,phiY=ty+fh/phi;
+        ctx.strokeStyle='rgba(255,100,200,.9)';ctx.lineWidth=2;ctx.setLineDash([]);
+        ctx.beginPath();ctx.moveTo(ox,phiY);ctx.lineTo(ox+dw,phiY);ctx.stroke();
+        ctx.fillStyle='rgba(255,100,200,.9)';ctx.font='10px sans-serif';ctx.fillText('φ',ox+4,phiY-3);
+      }
+      if(photoType==='frontal'&&exR&&exL){
+        const xR=toCanvas(exR).cx,xL=toCanvas(exL).cx,fw=xL-xR;
+        ctx.strokeStyle='rgba(100,200,255,.85)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+        [xR-fw/2,xR,xR+fw/2,xL,xL+fw/2].forEach(x=>{ctx.beginPath();ctx.moveTo(x,oy);ctx.lineTo(x,oy+dh);ctx.stroke();});
+      }
+      ctx.restore();
+    }
+    lms.forEach(lm=>{
+      const{cx,cy}=toCanvas(lm),col=CATS[lm.cat]||CATS.soft_tissue;
+      const isSel=lm.id===sel,isHov=lm.id===hover;
+      const r=isSel?pointR*1.7:isHov?pointR*1.4:pointR;
+      ctx.save();
+      if(isHov&&!isSel){ctx.beginPath();ctx.arc(cx,cy,r+3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.22)';ctx.fill();}
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=col.fill;ctx.fill();
+      ctx.strokeStyle=isSel?'#fff':col.stroke;ctx.lineWidth=isSel?2:1.5;ctx.stroke();
+      if(showLabels){
+        ctx.font=`bold ${Math.max(8,pointR*1.8)}px monospace`;ctx.fillStyle='#fff';
+        ctx.shadowColor='#000';ctx.shadowBlur=3;ctx.shadowOffsetX=1;ctx.shadowOffsetY=1;
+        ctx.fillText(lm.id,cx+r+3,cy+4);ctx.shadowColor='transparent';
+      }
+      ctx.restore();
+    });
+  }
+  drawAllRef.current=drawAll;
+
+  useEffect(()=>{const img=new Image();img.src=imageUrl;imgRef.current=img;img.onload=()=>drawAllRef.current?.();},[imageUrl]);
+  useEffect(()=>{drawAll();},[lms,sel,hover,showLabels,showMidline,showGolden,canvasW,dotSize,mode]);
+
+  useEffect(()=>{
+    if(initialLms){setDetecting(false);return;}
+    setDetecting(true);
+    const img=new Image();img.src=imageUrl;
+    img.onload=async()=>{const r=await detectAndRefine(img,photoType);setLms(r);setDetecting(false);};
+    img.onerror=()=>setDetecting(false);
+  },[]);
+
+  useEffect(()=>{
+    const cvs=canvasRef.current;if(!cvs)return;
+    const fn=(e)=>{if(drag)e.preventDefault();};
+    cvs.addEventListener('touchmove',fn,{passive:false});return()=>cvs.removeEventListener('touchmove',fn);
+  },[drag]);
+
+  useEffect(()=>{
+    function onKey(e){
+      if((e.key==='Delete'||e.key==='Backspace')&&sel&&document.activeElement.tagName!=='INPUT'){
+        e.preventDefault();setLms(prev=>prev.filter(l=>l.id!==sel));setSel(null);
+      }
+      if(e.key==='Escape'){setMode('normal');setAddPick(null);setSel(null);}
+    }
+    window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);
+  },[sel]);
+
+  function hitTest(mx,my){
+    const hitR=Math.max(10,pointR*2.5);
+    return lms.slice().reverse().find(lm=>{const{cx,cy}=toCanvas(lm);return Math.hypot(mx-cx,my-cy)<hitR;});
+  }
+  function getPos(e){
+    const rect=canvasRef.current.getBoundingClientRect(),t=e.touches?e.touches[0]:e;
+    return{mx:t.clientX-rect.left,my:t.clientY-rect.top};
+  }
+  function onDown(e){
+    e.preventDefault();const{mx,my}=getPos(e);const hit=hitTest(mx,my);
+    if(mode==='add'&&addPick&&!hit){
+      const{x,y}=toImg(mx,my);const xi=Math.max(0,Math.min(imgW,x)),yi=Math.max(0,Math.min(imgH,y));
+      setLms(prev=>{const exists=prev.find(l=>l.id===addPick.id);
+        if(exists)return prev.map(l=>l.id===addPick.id?{...l,x:xi,y:yi,confidence:1.0}:l);
+        return [...prev,{...addPick,x:xi,y:yi,confidence:1.0}];});
+      setSel(addPick.id);return;
+    }
+    if(hit){setSel(hit.id);setDrag({id:hit.id});if(canvasRef.current)canvasRef.current.style.cursor='grabbing';}
+    else setSel(null);
+  }
+  function onMove(e){
+    const{mx,my}=getPos(e);
+    if(drag){
+      const cxC=Math.max(ox,Math.min(ox+dw,mx)),cyC=Math.max(oy,Math.min(oy+dh,my));
+      const{x,y}=toImg(cxC,cyC);
+      setLms(prev=>prev.map(lm=>lm.id===drag.id?{...lm,x,y}:lm));
+    }else{
+      const hit=hitTest(mx,my),hid=hit?.id??null;
+      if(hid!==hover)setHover(hid);
+      if(canvasRef.current)canvasRef.current.style.cursor=mode==='add'?'crosshair':hit?'grab':'default';
+    }
+  }
+  function onUp(){setDrag(null);if(canvasRef.current)canvasRef.current.style.cursor=mode==='add'?'crosshair':'default';}
+
+  const movedCount=lms.filter(lm=>{const o=origLms.find(ol=>ol.id===lm.id);return o&&(Math.abs(lm.x-o.x)>1||Math.abs(lm.y-o.y)>1);}).length;
+  const byCategory={};
+  lms.forEach(lm=>{if(!byCategory[lm.cat])byCategory[lm.cat]=[];byCategory[lm.cat].push(lm);});
+  const placedIds=new Set(lms.map(l=>l.id)),unplaced=defs.filter(d=>!placedIds.has(d.id));
+  const label=PHOTO_CONFIGS.find(p=>p.id===photoType)?.label||photoType;
+
+  return(
+    <div className="main" style={{maxWidth:1060}}>
+      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:14}}>
+        <div>
+          <h1 style={{fontSize:19,fontWeight:700,color:'var(--gray-900)'}}>Confirm Landmarks — {label}</h1>
+          <p style={{fontSize:13,color:'var(--gray-500)',marginTop:3}}>
+            {detecting&&<><span className="spinner-sm" style={{marginRight:5}}/><span style={{color:'var(--blue)'}}>AI detecting landmarks…</span></>}
+            {!detecting&&movedCount>0&&<span style={{color:'var(--amber)',fontWeight:600}}>{movedCount} point{movedCount>1?'s':''} adjusted</span>}
+            {!detecting&&movedCount===0&&<span style={{color:'var(--green)'}}>Auto-placed — drag to refine</span>}
+          </p>
+        </div>
+        <button className="btn btn-secondary" style={{fontSize:12}} onClick={onBack}>← Back</button>
+      </div>
+      <div className="card" style={{marginBottom:10,padding:'10px 14px'}}>
+        <div className="toolbar">
+          <div className="legend">
+            {Object.entries(CATS).map(([k,v])=>(
+              <div key={k} className="leg-item"><span className="leg-dot" style={{background:v.fill,borderColor:v.stroke}}/>{v.label}</div>
+            ))}
+          </div>
+          <div className="size-wrap" style={{marginLeft:'auto'}}>
+            <span>Size</span>
+            <input type="range" min="33" max="100" value={Math.round(dotSize*100)} onChange={e=>setDotSize(Number(e.target.value)/100)}/>
+            <span style={{width:28}}>{Math.round(dotSize*100)}%</span>
+          </div>
+          <label className="cb-lbl"><input type="checkbox" checked={showLabels} onChange={e=>setShowLabels(e.target.checked)} style={{accentColor:'var(--blue)'}}/>Labels</label>
+          {photoType==='frontal'&&<label className="cb-lbl"><input type="checkbox" checked={showMidline} onChange={e=>setShowMidline(e.target.checked)} style={{accentColor:'var(--blue)'}}/>Midline</label>}
+          <label className="cb-lbl"><input type="checkbox" checked={showGolden} onChange={e=>setShowGolden(e.target.checked)} style={{accentColor:'#f59e0b'}}/><span style={{color:'#92400e'}}>Golden ratio</span></label>
+        </div>
+      </div>
+      {mode==='add'&&(
+        <div className="add-banner" style={{marginBottom:10}}>
+          <span>✚ Add mode</span>
+          {addPick?<span>Click on the image to place <strong>{addPick.name}</strong></span>:<span>Select a landmark from the list below</span>}
+          <button className="btn-ghost" style={{marginLeft:'auto'}} onClick={()=>{setMode('normal');setAddPick(null);}}>✕ Cancel</button>
+        </div>
+      )}
+      <div className="editor-layout">
+        <div className="canvas-wrap" ref={wrapRef}>
+          {detecting&&(
+            <div className="det-overlay">
+              <div className="spinner-lg" style={{borderColor:'rgba(255,255,255,.3)',borderTopColor:'#fff'}}/>
+              <p>Detecting landmarks…</p>
+              <p style={{fontSize:11,opacity:.7}}>{photoType==='profile'?'Using anatomical defaults for profile':'Using AI face detection'}</p>
+            </div>
+          )}
+          <canvas ref={canvasRef} width={canvasW} height={canvasH}
+            onMouseDown={onDown} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp}
+            onTouchStart={onDown} onTouchEnd={onUp} style={{display:'block'}}/>
+        </div>
+        <div className="sidebar">
+          <div className="card" style={{padding:10}}>
+            <div className="cat-lbl" style={{paddingLeft:0}}><span>Actions</span></div>
+            <div style={{display:'flex',gap:6,marginTop:4,flexWrap:'wrap'}}>
+              <button className={`btn btn-add${mode==='add'?' active':''}`} style={{fontSize:11,padding:'5px 10px'}} onClick={()=>setMode(m=>m==='add'?'normal':'add')}>✚ Add</button>
+              <button className="btn btn-danger" style={{fontSize:11,padding:'5px 10px'}} disabled={!sel} onClick={()=>{if(sel){setLms(prev=>prev.filter(l=>l.id!==sel));setSel(null);}}}>🗑 Delete</button>
+            </div>
+            {mode==='add'&&unplaced.length>0&&(
+              <div className="add-picker" style={{marginTop:8}}>
+                <p style={{fontSize:10,color:'var(--gray-400)',padding:'0 2px 4px'}}>Missing landmarks</p>
+                {unplaced.map(d=>(
+                  <div key={d.id} className={`add-pick-item${addPick?.id===d.id?' active':''}`} onClick={()=>setAddPick(d)}>
+                    <span style={{width:8,height:8,borderRadius:'50%',background:CATS[d.cat]?.fill,flexShrink:0,display:'inline-block'}}/>
+                    <span style={{fontFamily:'monospace',fontSize:10,minWidth:36}}>{d.id}</span>{d.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="card" style={{padding:10,flex:1}}>
+            <p className="cat-lbl" style={{paddingLeft:0,marginBottom:4}}>Landmarks ({lms.length})</p>
+            <div className="lm-list">
+              {Object.entries(byCategory).map(([cat,items])=>(
+                <div key={cat}>
+                  <p className="cat-lbl">{CATS[cat]?.label||cat}</p>
+                  {items.map(lm=>{
+                    const conf=Math.round((lm.confidence||.6)*100);
+                    const cc=conf>=80?'#16a34a':conf>=65?'#d97706':'#94a3b8';
+                    return(
+                      <div key={lm.id} className={`lm-item${sel===lm.id?' sel':''}`} onClick={()=>setSel(sel===lm.id?null:lm.id)}>
+                        <span className="lm-dot" style={{background:CATS[lm.cat]?.fill}}/>
+                        <span className="lm-id">{lm.id}</span>
+                        <span className="lm-name">{lm.name}</span>
+                        <span className="lm-conf" style={{color:cc}}>{conf}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+          {sel&&(()=>{
+            const lm=lms.find(l=>l.id===sel),orig=origLms.find(l=>l.id===sel);
+            const moved=orig&&(Math.abs(lm.x-orig.x)>1||Math.abs(lm.y-orig.y)>1);
+            return lm?(
+              <div className="detail-box">
+                <strong style={{color:'var(--gray-800)',fontSize:12}}>{lm.name}</strong>
+                <p style={{color:'var(--gray-500)',marginTop:3,fontFamily:'monospace',fontSize:10}}>x:{lm.x.toFixed(0)} y:{lm.y.toFixed(0)}</p>
+                <p style={{color:'var(--gray-400)',fontSize:10}}>Conf: {Math.round((lm.confidence||.6)*100)}%</p>
+                <div style={{display:'flex',gap:5,marginTop:6,flexWrap:'wrap'}}>
+                  {moved&&orig&&<button className="btn-ghost" style={{fontSize:10,color:'var(--blue)'}} onClick={()=>setLms(prev=>prev.map(l=>l.id===sel?{...l,x:orig.x,y:orig.y}:l))}>↩ Reset</button>}
+                  <button className="btn btn-danger" style={{fontSize:10,padding:'3px 8px'}} onClick={()=>{setLms(prev=>prev.filter(l=>l.id!==sel));setSel(null);}}>🗑 Delete</button>
+                </div>
+              </div>
+            ):null;
+          })()}
+        </div>
+      </div>
+      <div className="confirm-strip no-print">
+        <div>
+          <p style={{fontWeight:600,color:'var(--green)',fontSize:13}}>✅ {lms.length} landmarks ready to confirm</p>
+          <p style={{fontSize:11,color:'#166534',marginTop:2}}>Drag to correct · Add/Delete with buttons · Del key removes selected</p>
+        </div>
+        <button className="btn btn-primary btn-lg" onClick={()=>onConfirm(lms)}>Confirm Landmarks →</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Upload Slot ────────────────────────────────────────────────────────────────
+function Slot({config,num,file,preview,onFile,onRemove}){
+  const [open,setOpen]=useState(false);
+  const [drag,setDrag]=useState(false);
+  const ref=useRef();
+  function accept(f){if(!f||!f.type.startsWith('image/'))return;onFile(f);}
+  return(
+    <div className="card" style={{display:'flex',flexDirection:'column',gap:8}}>
+      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:8}}>
+        <div style={{display:'flex',gap:7,alignItems:'flex-start'}}>
+          <span className="slot-num">{num}</span>
+          <div><p style={{fontWeight:600,fontSize:13}}>{config.label}</p><p style={{fontSize:11,color:'var(--gray-500)',marginTop:1}}>{config.desc}</p></div>
+        </div>
+        <button className="guide-toggle" onClick={()=>setOpen(v=>!v)}>{open?'Hide':'Guide'}</button>
+      </div>
+      {open&&<div className="guide-box"><p style={{fontWeight:600,marginBottom:5}}>⚠️ Photo quality affects accuracy</p><ul style={{listStyle:'none',padding:0}}>{config.guide.map((g,i)=><li key={i}><span>•&nbsp;</span><span>{g}</span></li>)}</ul></div>}
+      {file?(
+        <div className="preview-wrap">
+          <img src={preview} alt={config.label}/>
+          <span className="preview-ok">✓ {file.name}</span>
+          <button className="preview-rm" onClick={onRemove}>Remove</button>
+        </div>
+      ):(
+        <div className={`drop-zone${drag?' dragover':''}`} onClick={()=>ref.current.click()}
+          onDragEnter={e=>{e.preventDefault();setDrag(true)}} onDragOver={e=>{e.preventDefault();setDrag(true)}}
+          onDragLeave={()=>setDrag(false)} onDrop={e=>{e.preventDefault();setDrag(false);accept(e.dataTransfer.files[0]);}}>
+          <input ref={ref} type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>e.target.files[0]&&accept(e.target.files[0])}/>
+          <div className="dz-icon">{drag?'📥':'📷'}</div>
+          <p>{drag?'Drop here':'Drag & drop or click'}</p>
+          <small>JPEG · PNG · WebP</small>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Report components ──────────────────────────────────────────────────────────
+function Badge({flag}){
+  const cls={within_normal_limits:'bn',borderline:'bb',abnormal:'ba',missing_data:'bm'}[flag]||'bm';
+  const lbl={within_normal_limits:'Normal',borderline:'Borderline',abnormal:'Abnormal',missing_data:'No data'}[flag]||flag;
+  return <span className={`badge ${cls}`}>{lbl}</span>;
+}
+function Row({label,val,norm,unit='mm'}){
+  if(val==null)return null;
+  return(<tr><td>{label}</td><td>{typeof val==='number'?val.toFixed(1):val}{typeof val==='number'?` ${unit}`:''}</td><td>{norm}</td></tr>);
+}
+function RCard({title,flag,children,wide}){
+  return(
+    <div className={`rcard${wide?' wide':''}`}>
+      <div className="card-hdr"><h3>{title}</h3>{flag&&<Badge flag={flag}/>}</div>
+      {children}
+    </div>
+  );
+}
+
+function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive}){
+  const abnCount=(report.findings||[]).filter(f=>f.level==='abnormal').length;
+  const borderCount=(report.findings||[]).filter(f=>f.level==='borderline').length;
+  const normalCount=(report.findings||[]).filter(f=>f.level==='normal').length;
+  return(
+    <div className="main">
+      {/* Report hero */}
+      <div style={{background:'linear-gradient(135deg,#0f172a,#1e3a5f)',borderRadius:16,padding:'24px 28px',marginBottom:22,boxShadow:'0 6px 24px rgba(15,23,42,.3)'}}>
+        <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:14}}>
+          <div>
+            <p style={{fontSize:11,color:'rgba(255,255,255,.45)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginBottom:6}}>Clinical Analysis Report</p>
+            <h1 style={{fontSize:24,fontWeight:800,color:'#fff',letterSpacing:'-.02em',fontFamily:'monospace'}}>{pid}</h1>
+            <p style={{fontSize:12,color:'rgba(255,255,255,.45)',marginTop:5}}>{report.ts} · {report.scale?`Scale: ${report.scale.toFixed(3)} mm/px`:'Uncalibrated'} · IPD: {ipdMm} mm</p>
+            <div style={{display:'flex',gap:10,marginTop:12}}>
+              {abnCount>0&&<span style={{background:'rgba(239,68,68,.2)',border:'1px solid rgba(239,68,68,.4)',borderRadius:20,padding:'3px 11px',fontSize:11,color:'#fca5a5',fontWeight:600}}>🔴 {abnCount} Abnormal</span>}
+              {borderCount>0&&<span style={{background:'rgba(245,158,11,.15)',border:'1px solid rgba(245,158,11,.35)',borderRadius:20,padding:'3px 11px',fontSize:11,color:'#fcd34d',fontWeight:600}}>⚠️ {borderCount} Borderline</span>}
+              {normalCount>0&&<span style={{background:'rgba(34,197,94,.15)',border:'1px solid rgba(34,197,94,.3)',borderRadius:20,padding:'3px 11px',fontSize:11,color:'#86efac',fontWeight:600}}>✅ {normalCount} Normal</span>}
+            </div>
+          </div>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}} className="no-print">
+            <button className="btn btn-pdf" onClick={()=>window.print()}>📄 Export PDF</button>
+            <button className="btn btn-xlsx" onClick={()=>exportExcel(report,pid,ipdMm)}>📊 Export Excel</button>
+            {fromArchive
+              ? <button className="btn btn-secondary" onClick={onBack}>← Archive</button>
+              : <button className="btn btn-secondary" onClick={onNewPatient}>← New Patient</button>}
+          </div>
+        </div>
+      </div>
+      {!report.scale&&(
+        <div style={{background:'var(--red-light)',border:'1px solid var(--red-border)',borderRadius:8,padding:'9px 14px',fontSize:12,color:'var(--red)',marginBottom:14}}>
+          ⚠ Calibration failed — outer canthus landmarks not found. Measurements in pixels only.
+        </div>
+      )}
+      <div className="kf">
+        <h2>Key Findings</h2>
+        {report.findings.map((f,i)=>{
+          const icon={normal:'✅',borderline:'⚠️',abnormal:'🔴',info:'ℹ️'}[f.level]||'→';
+          return(<div key={i} className="kf-item"><span className="kf-icon">{icon}</span><span className={`kf-text ${f.level}`}>{f.text}</span></div>);
+        })}
+      </div>
+      <div className="results-grid">
+        <RCard title="Facial Symmetry" flag={report.sym.flag}>
+          <table className="meas-table"><tbody>
+            <Row label="Chin deviation from midline"  val={report.sym.chinDev}   norm="< 2 mm"/>
+            <Row label="Nasal tip deviation"          val={report.sym.noseDev}   norm="< 2 mm"/>
+            <Row label="Alar base asymmetry"          val={report.sym.alarAsym}  norm="< 2 mm"/>
+            <Row label="Mouth corner asymmetry"       val={report.sym.mouthAsym} norm="< 2 mm"/>
+            <Row label="Canthus asymmetry"            val={report.sym.canthAsym} norm="< 2 mm"/>
+          </tbody></table>
+          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:6}}>Source: Arnett &amp; Bergman (1993)</p>
+        </RCard>
+        <RCard title="Facial Thirds" flag={report.thirds.flag}>
+          {[['Upper third (inferred)',report.thirds.upPct],['Middle third (Gl→Sn)',report.thirds.midPct],["Lower third (Sn→Me')",report.thirds.lowPct]].map(([label,pct])=>pct!=null&&(
+            <div key={label} style={{marginBottom:8}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--gray-600)',marginBottom:2}}><span>{label}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{pct.toFixed(1)}%</span></div>
+              <div className="thirds-bar"><div style={{width:`${Math.min(100,pct)}%`,height:'100%',borderRadius:999,background:Math.abs(pct-33.3)>5?'#f87171':Math.abs(pct-33.3)>3?'#fbbf24':'#4ade80'}}/></div>
+            </div>
+          ))}
+          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:4}}>Ideal 33.3% each · Source: Farkas (1994)</p>
+        </RCard>
+        <RCard title="Skeletal Class Estimate">
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+            <span style={{fontSize:12,color:'var(--gray-500)'}}>Soft-tissue estimate</span>
+            <span className={`badge ${report.skel.cls?.includes('III')?'class-III':report.skel.cls?.includes('II')?'class-II':'class-I'}`} style={{padding:'4px 12px',fontWeight:700}}>{report.skel.cls}</span>
+          </div>
+          <table className="meas-table"><tbody>
+            <Row label="Nasolabial angle (Cm–Sn–Ls)"     val={report.skel.nasolabial} norm="90–110°"          unit="°"/>
+            <Row label="Upper lip to E-plane (Ricketts)"  val={report.skel.upperE}     norm="−4 mm (Caucasian)"/>
+            <Row label="Lower lip to E-plane (Ricketts)"  val={report.skel.lowerE}     norm="−2 mm (Caucasian)"/>
+            <Row label="Pog' to Sn vertical"              val={report.skel.pogSn}      norm="≈ 0 mm (Class I)"/>
+          </tbody></table>
+          <div className="note-box">⚠ Soft-tissue estimate only. Confirm with lateral cephalogram.</div>
+        </RCard>
+        <RCard title="Lip Competence & Soft Tissue" flag={report.lip.flag}>
+          <table className="meas-table"><tbody>
+            <Row label="Upper lip length (Sn→Sto)"   val={report.lip.ulLen}       norm="19–22mm (F) · 20–24mm (M)"/>
+            <Row label="Lower lip length (Sto→Me')"  val={report.lip.llLen}       norm="38–44 mm"/>
+            <Row label="Interlabial gap (rest)"       val={report.lip.gap}         norm="0–3 mm"/>
+            <Row label="Nasolabial angle"             val={report.lip.nasolabial}  norm="90–110°"  unit="°"/>
+            <Row label="Mentolabial fold"             val={report.lip.mentolabial} norm="120–135°" unit="°"/>
+            <Row label="Upper lip to E-plane"         val={report.lip.upperE}      norm="−4 mm"/>
+            <Row label="Lower lip to E-plane"         val={report.lip.lowerE}      norm="−2 mm"/>
+          </tbody></table>
+          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:6}}>Source: Arnett &amp; Bergman (1993)</p>
+        </RCard>
+        <RCard title="Smile Arc & Buccal Corridor" flag={report.smile.flag}>
+          <div style={{marginBottom:10}}>
+            <p style={{fontSize:12,color:'var(--gray-500)',marginBottom:3}}>Smile arc</p>
+            <p style={{fontWeight:700,fontSize:16,textTransform:'capitalize',color:{consonant:'var(--green)',flat:'var(--amber)',reverse:'var(--red)',indeterminate:'var(--gray-400)'}[report.smile.arc]||'var(--gray-400)'}}>
+              {report.smile.arc}
+            </p>
+            <p style={{fontSize:11,color:'var(--gray-400)'}}>Consonant = aesthetic ideal · Sarver &amp; Ackerman (2001)</p>
+          </div>
+          <table className="meas-table"><tbody>
+            <Row label="Buccal corridor — left"  val={report.smile.bcLeft}  norm="10–15%" unit="%"/>
+            <Row label="Buccal corridor — right" val={report.smile.bcRight} norm="10–15%" unit="%"/>
+          </tbody></table>
+        </RCard>
+        <RCard title="Dental Midline" flag={report.mid.flag}>
+          <table className="meas-table"><tbody>
+            <Row label="Upper dental midline deviation" val={report.mid.udmDev} norm="< 1 mm"/>
+          </tbody></table>
+          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:6}}>From facial midline (Gl) · Source: Peck &amp; Peck (1995)</p>
+        </RCard>
+        <RCard title="Overjet & Overbite Estimate" wide>
+          <div className="note-box" style={{marginBottom:12}}>⚠ Photographic estimate — confirm with clinical measurement and radiographs.</div>
+          <table className="meas-table"><tbody>
+            <tr>
+              <td style={{width:'28%'}}>Overjet</td>
+              <td>{report.oj.oj!=null?`${report.oj.oj.toFixed(1)} mm`:'—'}</td>
+              <td><span className={`badge ${({normal:'bn',increased:'bb',severely_increased:'ba',reverse:'ba',edge_to_edge:'bb',not_measured:'bm'}[report.oj.ojCls]||'bm')}`}>{report.oj.ojCls.replace(/_/g,' ')}</span></td>
+              <td style={{fontSize:11,color:'var(--gray-400)',paddingLeft:10}}>Norm: 2–4 mm</td>
+            </tr>
+            <tr>
+              <td>Overbite</td>
+              <td>{report.oj.ob!=null?`${report.oj.ob.toFixed(1)} mm`:'—'}</td>
+              <td><span className={`badge ${({normal:'bn',increased:'bb',severely_increased:'ba',open_bite:'ba',edge_to_edge:'bb',not_measured:'bm'}[report.oj.obCls]||'bm')}`}>{report.oj.obCls.replace(/_/g,' ')}</span></td>
+              <td style={{fontSize:11,color:'var(--gray-400)',paddingLeft:10}}>Norm: 2–4 mm</td>
+            </tr>
+          </tbody></table>
+          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:7}}>Source: Proffit &amp; Fields (2013)</p>
+        </RCard>
+      </div>
+      <div className="disclaimer">
+        <strong>Disclaimer:</strong> This analysis is intended to assist clinical assessment and does not replace
+        the judgment of a qualified orthodontist. All measurements must be verified clinically before treatment planning.
+        Calibration: outer canthi × 0.70 as IPD proxy (Farkas 1994, IPD {ipdMm} mm).
+        E-plane norms are Caucasian (Ricketts 1968).
+      </div>
+    </div>
+  );
+}
+
+// ── Archive / Library page ─────────────────────────────────────────────────────
+function ArchivePage({onViewPatient,onBack}){
+  const [patients,setPatients]=useState(loadArchive);
+  const [search,setSearch]=useState('');
+  const [delConfirm,setDelConfirm]=useState(null);
+
+  function handleDelete(pid,e){
+    e.stopPropagation();
+    if(delConfirm===pid){
+      deleteFromArchive(pid);setPatients(loadArchive());setDelConfirm(null);
+    }else{setDelConfirm(pid);}
+  }
+
+  const filtered=patients.filter(p=>
+    p.pid.toLowerCase().includes(search.toLowerCase())||
+    p.report?.ts?.includes(search)||
+    p.report?.skel?.cls?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const symFlag=(r)=>r.sym?.flag||'missing_data';
+  const overallFlag=(r)=>{
+    const flags=[r.sym?.flag,r.thirds?.flag,r.lip?.flag,r.smile?.flag,r.mid?.flag];
+    if(flags.some(f=>f==='abnormal'))return'abnormal';
+    if(flags.some(f=>f==='borderline'))return'borderline';
+    if(flags.every(f=>f==='within_normal_limits'))return'within_normal_limits';
+    return'missing_data';
+  };
+  const flagColor={within_normal_limits:'#16a34a',borderline:'#d97706',abnormal:'#dc2626',missing_data:'#94a3b8'};
+  const flagLabel={within_normal_limits:'Normal',borderline:'Borderline',abnormal:'Abnormal',missing_data:'No data'};
+
+  return(
+    <div className="main">
+      <div style={{background:'linear-gradient(135deg,#0f172a,#1e3a5f)',borderRadius:16,padding:'22px 26px',marginBottom:22,boxShadow:'0 6px 24px rgba(15,23,42,.3)'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
+          <div>
+            <p style={{fontSize:11,color:'rgba(255,255,255,.4)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginBottom:5}}>Patient Archive</p>
+            <h1 style={{fontSize:22,fontWeight:800,color:'#fff',letterSpacing:'-.02em'}}>📁 Patient Library</h1>
+            <p style={{fontSize:12,color:'rgba(255,255,255,.45)',marginTop:5}}>{patients.length} patient record{patients.length!==1?'s':''} saved on this device</p>
+          </div>
+          <button className="btn btn-secondary" onClick={onBack}>← New Analysis</button>
+        </div>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:4}}>
+        <input className="archive-search" placeholder="🔍 Search by ID, date, class…" value={search} onChange={e=>setSearch(e.target.value)}/>
+        {search&&<button className="btn-ghost" onClick={()=>setSearch('')}>✕ Clear</button>}
+      </div>
+      {filtered.length===0?(
+        <div className="archive-empty">
+          <div className="empty-icon">{patients.length===0?'🗄️':'🔍'}</div>
+          <p style={{fontSize:16,fontWeight:600,color:'var(--gray-600)',marginBottom:6}}>{patients.length===0?'No patients yet':'No results'}</p>
+          <p style={{fontSize:13}}>{patients.length===0?'Analyses you complete will be saved here automatically.':'Try a different search term.'}</p>
+          {patients.length===0&&<button className="btn btn-primary" style={{marginTop:16}} onClick={onBack}>Start First Analysis</button>}
+        </div>
+      ):(
+        <div className="archive-grid">
+          {filtered.map(p=>{
+            const r=p.report||{};
+            const of_=overallFlag(r);
+            const sf=symFlag(r);
+            const clsCls=r.skel?.cls?.includes('III')?'ba':r.skel?.cls?.includes('II')?'bb':'bn';
+            return(
+              <div key={p.pid} className="archive-card" onClick={()=>onViewPatient(p)}>
+                <button className="archive-del" title={delConfirm===p.pid?'Click again to confirm':'Delete patient'} onClick={e=>handleDelete(p.pid,e)}>
+                  {delConfirm===p.pid?'⚠':'🗑'}
+                </button>
+                <div className="archive-pid">{p.pid}</div>
+                <div className="archive-ts">🕐 {r.ts||'—'}</div>
+                <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+                  <span style={{width:10,height:10,borderRadius:'50%',background:flagColor[of_],display:'inline-block',flexShrink:0}}/>
+                  <span style={{fontSize:12,fontWeight:600,color:flagColor[of_]}}>{flagLabel[of_]}</span>
+                </div>
+                <div className="archive-tags">
+                  {r.skel?.cls&&<span className={`badge ${clsCls}`}>{r.skel.cls}</span>}
+                  <span className={`badge ${{within_normal_limits:'bn',borderline:'bb',abnormal:'ba',missing_data:'bm'}[sf]||'bm'}`}>
+                    Sym: {flagLabel[sf]||'—'}
+                  </span>
+                  {r.smile?.arc&&r.smile.arc!=='indeterminate'&&(
+                    <span className={`badge ${r.smile.arc==='consonant'?'bn':r.smile.arc==='reverse'?'ba':'bb'}`}>
+                      Arc: {r.smile.arc}
+                    </span>
+                  )}
+                  {r.oj?.oj!=null&&<span className={`badge ${r.oj.ojCls==='normal'?'bn':'bb'}`}>OJ: {r.oj.oj.toFixed(1)} mm</span>}
+                </div>
+                <div style={{marginTop:10,paddingTop:8,borderTop:'1px solid var(--gray-100)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <span style={{fontSize:11,color:'var(--gray-400)'}}>
+                    Scale: {r.scale?`${r.scale.toFixed(3)} mm/px`:'uncal.'}
+                  </span>
+                  <span style={{fontSize:11,color:'var(--blue)',fontWeight:600}}>View →</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── App ────────────────────────────────────────────────────────────────────────
+function App(){
+  const [stage,setStage]   = useState('upload');
+  const [files,setFiles]   = useState({frontal:null,profile:null,smile:null});
+  const [previews,setPreviews] = useState({frontal:null,profile:null,smile:null});
+  const [dims,setDims]     = useState({frontal:{w:1024,h:768},profile:{w:1024,h:768},smile:{w:1024,h:768}});
+  const [confirmed,setConfirmed] = useState({});
+  const [report,setReport] = useState(null);
+  const [error,setError]   = useState(null);
+  const [pid,setPid]       = useState('P'+Date.now().toString().slice(-6));
+  const [ipdMm,setIpdMm]  = useState(63);
+  const [archivePatient,setArchivePatient] = useState(null); // patient record viewed from archive
+
+  function handleFile(pt){return file=>{
+    const url=URL.createObjectURL(file);
+    setFiles(f=>({...f,[pt]:file}));setPreviews(p=>({...p,[pt]:url}));
+    const img=new Image();img.src=url;img.onload=()=>setDims(d=>({...d,[pt]:{w:img.naturalWidth,h:img.naturalHeight}}));
+  }}
+  function handleRemove(pt){return()=>{
+    if(previews[pt])URL.revokeObjectURL(previews[pt]);
+    setFiles(f=>({...f,[pt]:null}));setPreviews(p=>({...p,[pt]:null}));
+  }}
+
+  const allUploaded=PHOTO_CONFIGS.every(p=>files[p.id]);
+  const curIdx=REVIEW_STAGES.indexOf(stage);
+  const curPhoto=curIdx>=0?PHOTO_KEYS[curIdx]:null;
+
+  function handleConfirm(lms){
+    const key=curPhoto,next={...confirmed,[key]:lms};
+    setConfirmed(next);
+    if(curIdx<REVIEW_STAGES.length-1){setStage(REVIEW_STAGES[curIdx+1]);}
+    else{
+      setStage('analysing');
+      setTimeout(()=>{
+        try{
+          const r=doAnalyse(next,ipdMm);
+          const rec={pid,ipdMm,report:{...r,pid},savedAt:new Date().toISOString()};
+          saveToArchive(rec);
+          setReport({...r,pid});setStage('results');
+        }catch(e){setError('Analysis error: '+e.message);setStage('review-smile');}
+      },350);
+    }
+  }
+  function handleBack(){
+    if(stage==='review-frontal')setStage('upload');
+    else{const i=REVIEW_STAGES.indexOf(stage);if(i>0)setStage(REVIEW_STAGES[i-1]);}
+  }
+  function handleStepNav(stepKey,stepIdx,activeStep){
+    if(stepIdx>=activeStep)return;
+    if(stepIdx===0){setStage('upload');return;}
+    if(REVIEW_STAGES.includes(stepKey))setStage(stepKey);
+    else if(stepKey==='results'&&report)setStage('results');
+  }
+  function handleReset(){
+    setStage('upload');setFiles({frontal:null,profile:null,smile:null});
+    setPreviews({frontal:null,profile:null,smile:null});
+    setConfirmed({});setReport(null);setError(null);
+    setPid('P'+Date.now().toString().slice(-6));
+  }
+
+  const activeStep=stage==='analysing'?4:STEPS.findIndex(s=>s.key===stage);
+  const showingArchive=stage==='archive';
+  const showingArchiveDetail=stage==='archive-detail';
+
+  return(
+    <>
+      {/* Header */}
+      <div className="hdr no-print">
+        <div className="hdr-logo-wrap">
+          <div className="hdr-logo-icon">⬡</div>
+          <span className="hdr-title">OrthoAnalyse</span>
+          <span className="hdr-sep"/>
+          <span className="hdr-sub">AI-Assisted Soft-Tissue Analysis · Master's Thesis</span>
+        </div>
+        <div className="hdr-right">
+          <div className="hdr-badge"><span className="hdr-dot"/>Decision Support Tool</div>
+          <button className="hdr-archive-btn" onClick={()=>setStage('archive')}>
+            📁 Patient Archive
+          </button>
+        </div>
+      </div>
+
+      {/* Progress bar (only during active workflow) */}
+      {!showingArchive&&!showingArchiveDetail&&stage!=='upload'&&(
+        <div className="pbar no-print">
+          <ol className="psteps">
+            {STEPS.map((s,i)=>{
+              const cls=i<activeStep?'done':i===activeStep?'active':'pending';
+              const clickable=i<activeStep;
+              return(
+                <React.Fragment key={s.key}>
+                  <li className={`step ${cls}`} onClick={()=>clickable&&handleStepNav(s.key,i,activeStep)} title={clickable?`Go back to ${s.label}`:undefined}>
+                    <span className="step-n">{i<activeStep?'✓':i+1}</span>
+                    {s.label}
+                    {clickable&&<span style={{fontSize:9,color:'var(--green)',marginLeft:2}}>↩</span>}
+                  </li>
+                  {i<STEPS.length-1&&<span className="step-arr">→</span>}
+                </React.Fragment>
+              );
+            })}
+          </ol>
+        </div>
+      )}
+
+      {error&&(
+        <div className="main" style={{paddingBottom:0}}>
+          <div className="error-banner">
+            <span>⚠ {error}</span>
+            <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--red)',fontSize:16}} onClick={()=>setError(null)}>✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* Archive list */}
+      {showingArchive&&(
+        <ArchivePage
+          onViewPatient={p=>{setArchivePatient(p);setStage('archive-detail');}}
+          onBack={()=>setStage('upload')}/>
+      )}
+
+      {/* Archive patient detail */}
+      {showingArchiveDetail&&archivePatient&&(
+        <ReportView
+          report={archivePatient.report}
+          pid={archivePatient.pid}
+          ipdMm={archivePatient.ipdMm||63}
+          fromArchive={true}
+          onBack={()=>setStage('archive')}
+          onNewPatient={handleReset}/>
+      )}
+
+      {/* Upload */}
+      {stage==='upload'&&(
+        <div className="main">
+          {/* Hero banner */}
+          <div style={{background:'linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#1e40af 100%)',borderRadius:18,padding:'32px 36px',marginBottom:24,position:'relative',overflow:'hidden',boxShadow:'0 8px 32px rgba(15,23,42,.35)'}}>
+            <div style={{position:'absolute',top:-40,right:-40,width:220,height:220,borderRadius:'50%',background:'rgba(255,255,255,.04)',pointerEvents:'none'}}/>
+            <div style={{position:'absolute',bottom:-60,right:100,width:160,height:160,borderRadius:'50%',background:'rgba(99,102,241,.12)',pointerEvents:'none'}}/>
+            <div style={{position:'relative',zIndex:1}}>
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
+                <span style={{background:'rgba(59,130,246,.25)',border:'1px solid rgba(59,130,246,.4)',borderRadius:20,padding:'3px 12px',fontSize:11,color:'#93c5fd',fontWeight:600,letterSpacing:'.04em'}}>THESIS RESEARCH TOOL</span>
+                <span style={{background:'rgba(34,197,94,.15)',border:'1px solid rgba(34,197,94,.3)',borderRadius:20,padding:'3px 12px',fontSize:11,color:'#86efac',fontWeight:600,letterSpacing:'.04em'}}>✓ Decision Support Only</span>
+              </div>
+              <h1 style={{fontSize:26,fontWeight:800,color:'#fff',marginBottom:8,letterSpacing:'-.02em',lineHeight:1.2}}>
+                AI-Assisted Orthodontic<br/>Photo Analysis
+              </h1>
+              <p style={{fontSize:13,color:'rgba(255,255,255,.60)',maxWidth:520,lineHeight:1.6}}>
+                Upload three standardised extraoral photographs. The AI auto-places anatomical landmarks for clinician review before computing 7 soft-tissue analyses.
+              </p>
+              <div style={{display:'flex',gap:20,marginTop:18}}>
+                {[['🎯','7 Clinical Analyses'],['📐','mm-Calibrated'],['🔒','On-Device Only'],['📁','Auto-Archived']].map(([icon,label])=>(
+                  <div key={label} style={{display:'flex',alignItems:'center',gap:6,fontSize:12,color:'rgba(255,255,255,.55)',fontWeight:500}}>
+                    <span style={{fontSize:14}}>{icon}</span>{label}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Patient info row */}
+          <div style={{display:'flex',gap:14,flexWrap:'wrap',marginBottom:18}}>
+            <div className="card" style={{display:'flex',alignItems:'center',gap:12,padding:'12px 18px',flex:'1 1 220px'}}>
+              <div style={{width:36,height:36,background:'var(--blue-light)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>🪪</div>
+              <div style={{flex:1}}>
+                <label style={{fontSize:11,fontWeight:700,color:'var(--gray-400)',letterSpacing:'.05em',textTransform:'uppercase',display:'block',marginBottom:4}}>Patient ID</label>
+                <input className="pid-input" value={pid} onChange={e=>setPid(e.target.value)} placeholder="e.g. P001" style={{width:'100%',border:'1.5px solid var(--gray-200)',borderRadius:8,padding:'6px 10px',fontSize:14,fontWeight:600,outline:'none',fontFamily:'monospace'}}/>
+              </div>
+            </div>
+            <div className="card" style={{display:'flex',alignItems:'center',gap:12,padding:'12px 18px',flex:'1 1 280px'}}>
+              <div style={{width:36,height:36,background:'#fef9c3',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>📏</div>
+              <div>
+                <label style={{fontSize:11,fontWeight:700,color:'var(--gray-400)',letterSpacing:'.05em',textTransform:'uppercase',display:'block',marginBottom:4}}>IPD (mm)</label>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <input type="number" min="52" max="74" value={ipdMm} onChange={e=>setIpdMm(Number(e.target.value)||63)}
+                    style={{border:'1.5px solid var(--gray-200)',borderRadius:8,padding:'6px 10px',fontSize:14,fontWeight:600,width:68,textAlign:'center',outline:'none'}}/>
+                  <span style={{fontSize:11,color:'var(--gray-400)',lineHeight:1.4}}>Inter-pupillary distance<br/>used for mm calibration</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Upload slots */}
+          <div className="upload-grid">
+            {PHOTO_CONFIGS.map((c,i)=>(
+              <Slot key={c.id} num={i+1} config={c} file={files[c.id]} preview={previews[c.id]}
+                onFile={handleFile(c.id)} onRemove={handleRemove(c.id)}/>
+            ))}
+          </div>
+
+          {/* Clinical notice */}
+          <div style={{display:'flex',alignItems:'flex-start',gap:12,background:'#fffbeb',border:'1px solid #fde68a',borderRadius:12,padding:'12px 16px',fontSize:12,color:'#92400e',marginBottom:20,lineHeight:1.6}}>
+            <span style={{fontSize:18,flexShrink:0}}>⚠️</span>
+            <span><strong>Clinical Notice:</strong> AI-suggested landmarks must be reviewed and confirmed by a qualified orthodontist before analysis runs. This system is a decision-support tool, not a diagnostic tool.</span>
+          </div>
+
+          <div style={{display:'flex',justifyContent:'flex-end',gap:10,alignItems:'center'}}>
+            {!allUploaded&&<p style={{fontSize:12,color:'var(--gray-400)',fontWeight:500}}>Upload all 3 photos to continue</p>}
+            <button className="btn btn-secondary" onClick={()=>setStage('archive')}>📁 View Archive</button>
+            <button className="btn btn-primary btn-lg" disabled={!allUploaded} onClick={()=>setStage('review-frontal')}>
+              🔍 Detect Landmarks →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Landmark review */}
+      {REVIEW_STAGES.includes(stage)&&previews[curPhoto]&&(
+        <LandmarkEditor key={stage} photoType={curPhoto} imageUrl={previews[curPhoto]}
+          imgW={dims[curPhoto].w} imgH={dims[curPhoto].h}
+          initialLms={confirmed[curPhoto]||null}
+          onConfirm={handleConfirm} onBack={handleBack}/>
+      )}
+
+      {/* Analysing */}
+      {stage==='analysing'&&(
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:320,gap:14}}>
+          <div className="spinner-lg"/>
+          <p style={{fontWeight:600,color:'var(--gray-600)'}}>Running clinical analysis…</p>
+          <p style={{fontSize:13,color:'var(--gray-400)'}}>Computing 7 analyses · Saving to archive</p>
+        </div>
+      )}
+
+      {/* Results */}
+      {stage==='results'&&report&&(
+        <ReportView report={report} pid={pid} ipdMm={ipdMm}
+          fromArchive={false}
+          onBack={()=>setStage('archive')}
+          onNewPatient={handleReset}/>
+      )}
+
+      {/* Branding */}
+      <div className="branding">
+        <div className="branding-inner">
+          <span className="branding-line1">Made with <span className="heart">♥</span> by Ibrahim AlBugha</span>
+          <span className="branding-line2">Made by Dr. Mohammad Samih</span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
 </html>

@@ -1,7 +1,7 @@
 # OrthoAnalyse — AI Orthodontic Photo Analysis System
 ## Complete Project Documentation (v2.0)
-> Last updated: June 2026  
-> Author: Doctor Mohammad Samih  
+> Last updated: June 2026 (v2.1 — reorganised to single-file static deployment)  
+> Authors: Ibrahim AlBugha · Doctor Mohammad Samih  
 > Context: Master's Thesis — AI-assisted orthodontic facial analysis
 
 ---
@@ -46,25 +46,34 @@ The system accepts three standardised extraoral photographs (frontal at rest, la
 ## 2. FOLDER STRUCTURE
 
 ```
-C:\Users\HP\OneDrive\Desktop\MASTER\
+master/
 │
-├── orthodontic-analysis.html        ← PRIMARY DELIVERABLE (single-file web app)
-├── generate-test-images.html        ← Helper: generates 3 synthetic test face images
-│                                       for testing the app pipeline
-└── PROJECT_DOCUMENTATION.md         ← THIS FILE
+├── index.html                  ← PRIMARY DELIVERABLE — the entire application
+├── generate-test-images.html   ← Utility: generates 3 synthetic test face images
+├── netlify.toml                ← Netlify deployment config (static, no build step)
+├── PROJECT_DOCUMENTATION.md   ← This file
+├── SETUP.md                    ← Quick-start guide
+│
+└── dev/                        ← Development & backend source (not deployed)
+    ├── frontend-react/         ← Original React/Vite source (App.jsx, components, etc.)
+    ├── backend-python/         ← FastAPI Python backend (main.py, analysis.py, etc.)
+    └── scripts/                ← Deployment helper PowerShell scripts
 ```
 
-### orthodontic-analysis.html
-This is the entire application in one file. It contains:
+### index.html
+This is the **entire application in one file**. It contains:
 - HTML structure
 - All CSS styles (embedded `<style>`)
 - React 18 components (embedded `<script type="text/babel">`)
-- All clinical logic
-- All drawing/canvas code
-- No external dependencies except CDN scripts loaded at runtime
+- All clinical analysis logic
+- Canvas/drawing code for the landmark editor
+- No build step required — loads React, Babel, and SheetJS from CDN at runtime
 
 ### generate-test-images.html
 A standalone utility page. Open in any browser, click "Download All 3 Images" to get synthetic frontal, profile, and smile face illustrations. Used for testing the full app pipeline without real patient photos.
+
+### netlify.toml
+Configures Netlify to serve the static `index.html` directly — **no build command, no npm install**. Drag-and-drop or GitHub-push deployment both work instantly.
 
 ---
 
@@ -599,21 +608,36 @@ const [archivePatient, setArchivePatient]  // patient record from archive
 
 ## 15. DEPLOYMENT INSTRUCTIONS
 
-### Netlify (recommended)
+### Option A — Netlify Drag-and-Drop (fastest, 30 seconds)
 1. Go to [netlify.com](https://netlify.com) and log in
-2. Drag the `orthodontic-analysis.html` file onto the Netlify deploy area
-3. The URL will be something like `https://random-name.netlify.app`
+2. Drag just the **`index.html`** file onto the Netlify deploy area
+3. Done — your URL will be `https://random-name.netlify.app`
 4. To use a custom URL: Site settings → Domain management → Add custom domain
 
-### Local (no internet needed for the app logic)
-1. Open `orthodontic-analysis.html` in Chrome or Edge
-2. The CDN scripts require internet on first load; after that the browser may cache them
-3. For offline use, embed the CDN libraries locally (download and add `<script>` from local files)
+### Option B — Netlify from GitHub (auto-deploys on every push)
+1. Push this repo to GitHub (the `netlify.toml` is already configured)
+2. In Netlify: New project → Import from GitHub → Select the repo
+3. **No build settings needed** — `netlify.toml` sets `publish = "."` automatically
+4. Every push to `main` triggers a new deploy
 
-### GitHub Pages
-1. Create a GitHub repository
-2. Upload `orthodontic-analysis.html` and rename it to `index.html`
-3. Settings → Pages → Source: main branch
+### Option C — Local (no internet required after first load)
+1. Open `index.html` in Chrome or Edge directly (double-click the file)
+2. CDN scripts (React, Babel, SheetJS) require internet on first load; the browser caches them
+3. For fully offline use, download the CDN scripts and replace the `<script src="...">` tags with local `<script src="./libs/...">` paths
+
+### Option D — GitHub Pages
+1. Push the repo to GitHub (file must be named `index.html` — it already is)
+2. Settings → Pages → Source: Deploy from branch `main`, folder `/`
+3. Your site will be at `https://yourusername.github.io/repo-name/`
+
+### What Netlify does NOT need
+- No Node.js
+- No npm install
+- No build command
+- No environment variables
+- No server configuration
+
+The entire app runs in the visitor's browser.
 
 ---
 
@@ -621,9 +645,9 @@ const [archivePatient, setArchivePatient]  // patient record from archive
 
 ### For a programmer or AI tool picking this up
 
-**The entire application lives in one file**: `C:\Users\HP\OneDrive\Desktop\MASTER\orthodontic-analysis.html`
+**The entire application lives in one file**: `index.html` (in the project root)
 
-**Read the file** — it is ~1600 lines of self-contained code. Key sections in order:
+**Read the file** — it is ~1360 lines of self-contained code. Key sections in order:
 1. `<head>` — CDN `<script>` tags (React, Babel, SheetJS)
 2. `<style>` — All CSS (~350 lines)
 3. `<script type="text/babel">` — All application logic
@@ -657,10 +681,13 @@ const [archivePatient, setArchivePatient]  // patient record from archive
 ### Branding (must keep)
 ```html
 <div className="branding">
-  MADE WITH <span className="heart">♥</span> BY DOCTOR.MOHAMMAD SAMIH
+  <div className="branding-inner">
+    <span className="branding-line1">Made with <span className="heart">♥</span> by Ibrahim AlBugha</span>
+    <span className="branding-line2">Made by Dr. Mohammad Samih</span>
+  </div>
 </div>
 ```
-This appears fixed bottom-right on all screens, and on printed/PDF pages via `@media print` CSS.
+Glass-effect pill, fixed bottom-right on all screens, and on printed/PDF pages via `@media print` CSS.
 
 ---
 
@@ -680,4 +707,4 @@ This appears fixed bottom-right on all screens, and on printed/PDF pages via `@m
 ---
 
 *This document was generated as part of a Master's thesis project on AI-assisted orthodontic photo analysis.*  
-*Tool: OrthoAnalyse v2.0 | Author: Doctor Mohammad Samih | © 2026*
+*Tool: OrthoAnalyse v2.1 | Ibrahim AlBugha · Dr. Mohammad Samih | © 2026*

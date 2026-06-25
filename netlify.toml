@@ -1,12 +1,11 @@
+# OrthoAnalyse — Static HTML deployment
+# No build step required. Netlify serves index.html directly.
+
 [build]
-  command = "npm run build"
-  publish = "dist"
+  publish = "."
 
-[build.environment]
-  NODE_VERSION = "20"
-
-# React Router: send all routes to index.html
+# Send all routes to index.html (SPA-style navigation)
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to   = "/index.html"
   status = 200
