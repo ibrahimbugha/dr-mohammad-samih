@@ -404,78 +404,68 @@ function mapMPtoLms(lms,W,H,photoType){
     ];
   }
   if(photoType==='profile'){
-    // Detect which way the face points: nose tip (4) x > 0.5 = face-right in image
+    // nose tip x > 0.5 → face points RIGHT in image
     const faceRight=lms[4].x>0.5;
-    // Tragus: index 234 = left ear (image-left = face-right), 454 = right ear (image-right = face-left)
-    const tragus=faceRight ? p(234) : p(454);
-    // Nose tip
-    const prn=p(4);
-    // Nasion (bridge of nose)
-    const nasion=p(168);
-    // Glabella: above nasion on forehead (index 9 is upper forehead midline)
-    const gl_raw=p(9);
-    const gl={x:gl_raw.x,y:gl_raw.y};
-    // Subnasale: between nose tip and upper lip — midpoint of 2 (nose base) and 0 (lip top)
-    const sn=mx(p(2),p(0));
-    // Upper lip most forward point
-    const ls=p(0);
-    // Stomion: midpoint of upper/lower inner lip
-    const sto=mx(p(13),p(14));
-    // Lower lip
-    const li=p(14);
-    // Soft-B: between lower lip and chin (index 18 = chin area)
-    const b_pt=mx(p(14),p(152));
-    // Soft tissue Pogonion: chin-most forward point (index 199)
-    const pog=p(199);
-    // Menton: lowest chin point
-    const me=p(152);
-    // Columella: between nose tip and subnasale
-    const cm=mx(p(4),p(2));
+    // Tragus: face points RIGHT → we see patient's LEFT side → LEFT ear visible → image-RIGHT = index 454
+    //         face points LEFT  → we see patient's RIGHT side → RIGHT ear visible → image-LEFT = index 234
+    const tragus=faceRight ? p(454) : p(234);
+    const prn=p(4);          // pronasale — nose tip, always reliable
+    const nasion=p(168);     // sellion / nasion — reliable
+    const gl=p(9);           // forehead midline — best MediaPipe glabella approx
+    const cm=mx(p(4),p(2));  // columella — between nose tip and subnasal point
+    const sn=p(2);           // subnasale — base of nasal septum
+    // p(13) = labrale superius (upper lip most forward point) — NOT p(0) which is chin
+    const ls=p(13);
+    const sto=mx(p(13),p(14)); // stomion — lips contact point
+    const li=p(14);            // labrale inferius — lower lip
+    // Soft tissue B: posterior concavity between lower lip and chin
+    // Weighted blend — B sits ~65% of the way from li to me in y, but is x-retruded
+    const b_pt={x:p(14).x*0.30+p(152).x*0.70, y:p(14).y*0.35+p(152).y*0.65};
+    const pog=p(199);    // soft tissue pogonion — most forward chin point
+    const me=p(152);     // menton — lowest chin
     return[
-      {id:'Gl_p',  x:gl.x,    y:gl.y,    c:.82},
-      {id:'N_p',   x:nasion.x,y:nasion.y, c:.90},
-      {id:'Prn_p', x:prn.x,   y:prn.y,   c:.92},
-      {id:'Cm',    x:cm.x,    y:cm.y,    c:.85},
-      {id:'Sn_p',  x:sn.x,   y:sn.y,    c:.87},
-      {id:'Ls_p',  x:ls.x,    y:ls.y,    c:.88},
-      {id:'Sto',   x:sto.x,   y:sto.y,   c:.86},
-      {id:'Li_p',  x:li.x,    y:li.y,    c:.88},
-      {id:'B_p',   x:b_pt.x,  y:b_pt.y,  c:.82},
-      {id:'Pog_p', x:pog.x,   y:pog.y,   c:.84},
-      {id:'Me_p',  x:me.x,    y:me.y,    c:.87},
-      {id:'T',     x:tragus.x,y:tragus.y, c:.89},
+      {id:'Gl_p',  x:gl.x,     y:gl.y,     c:.80},
+      {id:'N_p',   x:nasion.x, y:nasion.y,  c:.90},
+      {id:'Prn_p', x:prn.x,    y:prn.y,     c:.93},
+      {id:'Cm',    x:cm.x,     y:cm.y,      c:.85},
+      {id:'Sn_p',  x:sn.x,     y:sn.y,      c:.87},
+      {id:'Ls_p',  x:ls.x,     y:ls.y,      c:.88},
+      {id:'Sto',   x:sto.x,    y:sto.y,     c:.86},
+      {id:'Li_p',  x:li.x,     y:li.y,      c:.88},
+      {id:'B_p',   x:b_pt.x,   y:b_pt.y,    c:.78},
+      {id:'Pog_p', x:pog.x,    y:pog.y,     c:.84},
+      {id:'Me_p',  x:me.x,     y:me.y,      c:.87},
+      {id:'T',     x:tragus.x, y:tragus.y,  c:.89},
     ];
   }
   if(photoType==='smile'){
-    // Mouth corners
     const chR=p(61), chL=p(291);
-    const mw=chL.x-chR.x;
-    // Upper incisor edges: use points on the inner upper gum-line / tooth boundary
-    // p(78)=right inner upper lip near tooth, p(308)=left; offset slightly down into tooth area
-    const toothOff=H*0.008; // small downward offset to hit incisal edge rather than lip edge
-    const uiR={x:p(78).x, y:p(78).y+toothOff};
-    const uiL={x:p(308).x,y:p(308).y+toothOff};
-    // Lower incisor edges: upper inner lower lip (p(95) right, p(324) left), shifted up
-    const liR={x:p(95).x, y:p(95).y-toothOff};
-    const liL={x:p(324).x,y:p(324).y-toothOff};
-    // Lower lip center
-    const llMid=p(17);
-    // Upper dental midline: midpoint between the two central incisors, at the lip aperture level
-    const udm={x:(chR.x+chL.x)/2, y:(p(78).y+p(308).y)/2};
-    // Buccal corridors: dark space beyond last visible tooth — estimate as ~25% beyond corners
-    const bcR={x:chR.x-mw*.25, y:chR.y};
-    const bcL={x:chL.x+mw*.25, y:chL.y};
+    const mw=Math.abs(chL.x-chR.x);
+    // p(82) / p(312): inner upper lip points slightly right/left of center — best upper incisal edge approx
+    // p(87) / p(317): inner lower lip points slightly right/left of center — best lower incisal edge approx
+    // Small offset: push inward from lip edge toward actual tooth incisal edge
+    const toothOff=H*0.010;
+    const uiR={x:p(82).x,  y:p(82).y +toothOff};  // upper right incisal edge
+    const uiL={x:p(312).x, y:p(312).y+toothOff};  // upper left incisal edge
+    const liR={x:p(87).x,  y:p(87).y -toothOff};  // lower right incisal edge
+    const liL={x:p(317).x, y:p(317).y-toothOff};  // lower left incisal edge
+    const llMid=p(17);  // lower lip midpoint
+    // UDM: center x between the two upper central incisal edges
+    const udm={x:(uiR.x+uiL.x)/2, y:(uiR.y+uiL.y)/2};
+    // Buccal corridors: ~22% beyond mouth corners
+    const bcR={x:chR.x-mw*0.22, y:chR.y};
+    const bcL={x:chL.x+mw*0.22, y:chL.y};
     return[
-      {id:'ChR_s', x:chR.x, y:chR.y,  c:.95},
-      {id:'ChL_s', x:chL.x, y:chL.y,  c:.95},
-      {id:'UI_R',  x:uiR.x, y:uiR.y,  c:.88},
-      {id:'UI_L',  x:uiL.x, y:uiL.y,  c:.88},
-      {id:'LI_R',  x:liR.x, y:liR.y,  c:.88},
-      {id:'LI_L',  x:liL.x, y:liL.y,  c:.88},
-      {id:'LL_mid',x:llMid.x,y:llMid.y,c:.92},
-      {id:'UDM_s', x:udm.x,  y:udm.y,  c:.85},
-      {id:'BCR',   x:bcR.x,  y:bcR.y,  c:.75},
-      {id:'BCL',   x:bcL.x,  y:bcL.y,  c:.75},
+      {id:'ChR_s', x:chR.x,  y:chR.y,   c:.95},
+      {id:'ChL_s', x:chL.x,  y:chL.y,   c:.95},
+      {id:'UI_R',  x:uiR.x,  y:uiR.y,   c:.88},
+      {id:'UI_L',  x:uiL.x,  y:uiL.y,   c:.88},
+      {id:'LI_R',  x:liR.x,  y:liR.y,   c:.88},
+      {id:'LI_L',  x:liL.x,  y:liL.y,   c:.88},
+      {id:'LL_mid',x:llMid.x,y:llMid.y,  c:.92},
+      {id:'UDM_s', x:udm.x,  y:udm.y,   c:.85},
+      {id:'BCR',   x:bcR.x,  y:bcR.y,   c:.75},
+      {id:'BCL',   x:bcL.x,  y:bcL.y,   c:.75},
     ];
   }
   return null;
