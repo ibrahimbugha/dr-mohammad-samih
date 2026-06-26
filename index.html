@@ -216,49 +216,48 @@ const CATS = {
 
 // ── Landmark definitions ───────────────────────────────────────────────────────
 const LM_FRONTAL = [
-  {id:'Gl',  name:'Glabella',           nx:.500,ny:.165,cat:'skeletal'},
-  {id:'N',   name:'Nasion',             nx:.500,ny:.222,cat:'skeletal'},
-  {id:'ExR', name:'Outer Canthus (R)',  nx:.318,ny:.252,cat:'soft_tissue'},
-  {id:'EnR', name:'Inner Canthus (R)',  nx:.418,ny:.255,cat:'soft_tissue'},
-  {id:'EnL', name:'Inner Canthus (L)',  nx:.582,ny:.255,cat:'soft_tissue'},
-  {id:'ExL', name:'Outer Canthus (L)', nx:.682,ny:.252,cat:'soft_tissue'},
-  {id:'Prn', name:'Nasal Tip',          nx:.500,ny:.395,cat:'soft_tissue'},
-  {id:'AlR', name:'Alar Base (R)',      nx:.432,ny:.422,cat:'soft_tissue'},
-  {id:'AlL', name:'Alar Base (L)',      nx:.568,ny:.422,cat:'soft_tissue'},
-  {id:'Sn',  name:'Subnasale',          nx:.500,ny:.448,cat:'soft_tissue'},
-  {id:'Ls',  name:'Upper Lip',          nx:.500,ny:.510,cat:'soft_tissue'},
-  {id:'ChR', name:'Mouth Corner (R)',   nx:.415,ny:.524,cat:'soft_tissue'},
-  {id:'ChL', name:'Mouth Corner (L)',  nx:.585,ny:.524,cat:'soft_tissue'},
-  {id:'Li',  name:'Lower Lip',          nx:.500,ny:.558,cat:'soft_tissue'},
-  {id:'Me',  name:"Menton (Me')",       nx:.500,ny:.740,cat:'skeletal'},
+  {id:'Gl',  name:'Glabella',          nx:.500,ny:.165,cat:'skeletal',    desc:'الجلابيلا — النقطة الأعلى بين الحاجبين على الجبهة\nHighest point between eyebrows on forehead'},
+  {id:'N',   name:'Nasion',            nx:.500,ny:.222,cat:'skeletal',    desc:'النازيون — الانخفاض عند جذر الأنف بين العينين\nDepression where nose meets forehead (between eyes)'},
+  {id:'ExR', name:'Outer Canthus (R)',nx:.318,ny:.252,cat:'soft_tissue', desc:'الزاوية الخارجية للعين اليمنى — بجانب الصدغ\nOuter corner of right eye (temple side)'},
+  {id:'EnR', name:'Inner Canthus (R)',nx:.418,ny:.255,cat:'soft_tissue', desc:'الزاوية الداخلية للعين اليمنى — بجانب الأنف\nInner corner of right eye (nose side)'},
+  {id:'EnL', name:'Inner Canthus (L)',nx:.582,ny:.255,cat:'soft_tissue', desc:'الزاوية الداخلية للعين اليسرى — بجانب الأنف\nInner corner of left eye (nose side)'},
+  {id:'ExL', name:'Outer Canthus (L)',nx:.682,ny:.252,cat:'soft_tissue', desc:'الزاوية الخارجية للعين اليسرى — بجانب الصدغ\nOuter corner of left eye (temple side)'},
+  {id:'Prn', name:'Nasal Tip',         nx:.500,ny:.395,cat:'soft_tissue', desc:'طرف الأنف — أكثر نقطة بروزاً للأمام في الأنف\nTip of nose, most forward protruding point'},
+  {id:'AlR', name:'Alar Base (R)',     nx:.432,ny:.422,cat:'soft_tissue', desc:'قاعدة جناح الأنف الأيمن — حيث يلتقي الأنف بالخد\nBase of right nostril where it meets the cheek'},
+  {id:'AlL', name:'Alar Base (L)',     nx:.568,ny:.422,cat:'soft_tissue', desc:'قاعدة جناح الأنف الأيسر — حيث يلتقي الأنف بالخد\nBase of left nostril where it meets the cheek'},
+  {id:'Sn',  name:'Subnasale',         nx:.500,ny:.448,cat:'soft_tissue', desc:'سوبنازالي — حيث يلتقي الحاجز الأنفي مع الشفة العليا\nWhere nasal septum base meets upper lip'},
+  {id:'Ls',  name:'Upper Lip',         nx:.500,ny:.510,cat:'soft_tissue', desc:'لابرالي سوبيريوس — أبرز نقطة في وسط الشفة العليا\nMost prominent point of upper lip center'},
+  {id:'ChR', name:'Mouth Corner (R)', nx:.415,ny:.524,cat:'soft_tissue', desc:'زاوية الفم اليمنى — ملتقى الشفتين على اليمين\nRight corner where upper and lower lips meet'},
+  {id:'ChL', name:'Mouth Corner (L)', nx:.585,ny:.524,cat:'soft_tissue', desc:'زاوية الفم اليسرى — ملتقى الشفتين على اليسار\nLeft corner where upper and lower lips meet'},
+  {id:'Li',  name:'Lower Lip',         nx:.500,ny:.558,cat:'soft_tissue', desc:'لابرالي إنفيريوس — أبرز نقطة في وسط الشفة السفلى\nMost prominent point of lower lip center'},
+  {id:'Me',  name:"Menton (Me')",      nx:.500,ny:.740,cat:'skeletal',    desc:'المينتون — أدنى نقطة في الذقن على خط الوسط\nLowest point of chin on facial midline'},
 ];
 const LM_PROFILE = [
-  // nx values set for face pointing RIGHT (nose on right side of image).
-  // Use the Flip ↔ button in the toolbar if the patient faces left.
-  {id:'Gl_p',  name:'Glabella',              nx:.532,ny:.178,cat:'skeletal'},
-  {id:'N_p',   name:'Soft Tissue Nasion',    nx:.552,ny:.222,cat:'skeletal'},
-  {id:'Prn_p', name:'Pronasale (Nasal Tip)', nx:.662,ny:.368,cat:'soft_tissue'},
-  {id:'Cm',    name:'Columella',             nx:.630,ny:.402,cat:'soft_tissue'},
-  {id:'Sn_p',  name:'Subnasale',             nx:.612,ny:.432,cat:'soft_tissue'},
-  {id:'Ls_p',  name:'Upper Lip',             nx:.638,ny:.500,cat:'soft_tissue'},
-  {id:'Sto',   name:'Stomion',               nx:.622,ny:.528,cat:'soft_tissue'},
-  {id:'Li_p',  name:'Lower Lip',             nx:.625,ny:.558,cat:'soft_tissue'},
-  {id:'B_p',   name:'Soft Tissue B Point',   nx:.602,ny:.618,cat:'skeletal'},
-  {id:'Pog_p', name:'Soft Tissue Pogonion',  nx:.616,ny:.656,cat:'skeletal'},
-  {id:'Me_p',  name:"Menton (Me')",          nx:.592,ny:.708,cat:'skeletal'},
-  {id:'T',     name:'Tragus of Ear',         nx:.242,ny:.338,cat:'soft_tissue'},
+  // nx values set for face pointing RIGHT. Use Flip ↔ button if face points left.
+  {id:'Gl_p',  name:'Glabella',              nx:.532,ny:.178,cat:'skeletal',    desc:'الجلابيلا — أبرز نقطة على الجبهة فوق الأنف من الجانب\nMost prominent forehead point above nose bridge (side view)'},
+  {id:'N_p',   name:'Soft Tissue Nasion',    nx:.552,ny:.222,cat:'skeletal',    desc:'النازيون — أعمق نقطة على جسر الأنف من الجانب\nDeepest point on nose bridge from side view'},
+  {id:'Prn_p', name:'Pronasale (Nasal Tip)', nx:.662,ny:.368,cat:'soft_tissue', desc:'برونازالي — أكثر نقطة بروزاً للأمام في طرف الأنف\nMost anterior (forward) point of nose tip (profile)'},
+  {id:'Cm',    name:'Columella',             nx:.630,ny:.402,cat:'soft_tissue', desc:'الكولوميلا — أسفل الحاجز الأنفي بين الأنف والشفة\nBase of nasal septum between nose tip and upper lip'},
+  {id:'Sn_p',  name:'Subnasale',             nx:.612,ny:.432,cat:'soft_tissue', desc:'سوبنازالي — ملتقى قاعدة الأنف مع الشفة العليا\nJunction where nose base meets upper lip'},
+  {id:'Ls_p',  name:'Upper Lip',             nx:.638,ny:.500,cat:'soft_tissue', desc:'أبرز نقطة في الشفة العليا من الجانب\nMost protruding point of upper lip from side'},
+  {id:'Sto',   name:'Stomion',               nx:.622,ny:.528,cat:'soft_tissue', desc:'ستوميون — نقطة تلاصق الشفتين عند الإغلاق\nWhere lips touch each other when closed'},
+  {id:'Li_p',  name:'Lower Lip',             nx:.625,ny:.558,cat:'soft_tissue', desc:'أبرز نقطة في الشفة السفلى من الجانب\nMost protruding point of lower lip from side'},
+  {id:'B_p',   name:'Soft Tissue B Point',   nx:.602,ny:.618,cat:'skeletal',    desc:'نقطة B — المنطقة المقعرة بين الشفة السفلى والذقن\nConcave area between lower lip and chin'},
+  {id:'Pog_p', name:'Soft Tissue Pogonion',  nx:.616,ny:.656,cat:'skeletal',    desc:'بوغونيون — أكثر نقطة تقدماً للأمام في الذقن\nMost anterior (forward) point of soft tissue chin'},
+  {id:'Me_p',  name:"Menton (Me')",          nx:.592,ny:.708,cat:'skeletal',    desc:'المينتون — أدنى نقطة في الذقن من الجانب\nLowest point of chin from side view'},
+  {id:'T',     name:'Tragus of Ear',         nx:.242,ny:.338,cat:'soft_tissue', desc:'زنمة الأذن — النتوء الغضروفي أمام فتحة قناة الأذن\nCartilage bump directly in front of ear canal opening'},
 ];
 const LM_SMILE = [
-  {id:'ChR_s', name:'Mouth Corner (R)',       nx:.345,ny:.528,cat:'soft_tissue'},
-  {id:'ChL_s', name:'Mouth Corner (L)',       nx:.655,ny:.528,cat:'soft_tissue'},
-  {id:'UI_R',  name:'Upper Incisor Edge (R)', nx:.488,ny:.518,cat:'dental'},
-  {id:'UI_L',  name:'Upper Incisor Edge (L)', nx:.512,ny:.518,cat:'dental'},
-  {id:'LI_R',  name:'Lower Incisor Edge (R)', nx:.488,ny:.552,cat:'dental'},
-  {id:'LI_L',  name:'Lower Incisor Edge (L)', nx:.512,ny:.552,cat:'dental'},
-  {id:'LL_mid',name:'Lower Lip Midpoint',     nx:.500,ny:.590,cat:'soft_tissue'},
-  {id:'UDM_s', name:'Upper Dental Midline',   nx:.500,ny:.524,cat:'dental'},
-  {id:'BCR',   name:'Buccal Corridor (R)',    nx:.278,ny:.534,cat:'dental'},
-  {id:'BCL',   name:'Buccal Corridor (L)',    nx:.722,ny:.534,cat:'dental'},
+  {id:'ChR_s', name:'Mouth Corner (R)',      nx:.345,ny:.528,cat:'soft_tissue', desc:'زاوية الفم اليمنى — ملتقى الشفتين عند الابتسامة\nRight commissure (corner of mouth) during smile'},
+  {id:'ChL_s', name:'Mouth Corner (L)',      nx:.655,ny:.528,cat:'soft_tissue', desc:'زاوية الفم اليسرى — ملتقى الشفتين عند الابتسامة\nLeft commissure (corner of mouth) during smile'},
+  {id:'UI_R',  name:'Upper Incisor Edge (R)',nx:.488,ny:.518,cat:'dental',      desc:'حافة القاطع العلوي الأيمن — أسفل السن الأمامي العلوي الأيمن (الحافة القاطعة)\nBottom edge of right upper front tooth (incisal edge)'},
+  {id:'UI_L',  name:'Upper Incisor Edge (L)',nx:.512,ny:.518,cat:'dental',      desc:'حافة القاطع العلوي الأيسر — أسفل السن الأمامي العلوي الأيسر\nBottom edge of left upper front tooth (incisal edge)'},
+  {id:'LI_R',  name:'Lower Incisor Edge (R)',nx:.488,ny:.552,cat:'dental',      desc:'حافة القاطع السفلي الأيمن — أعلى السن الأمامي السفلي الأيمن\nTop edge of right lower front tooth (incisal edge)'},
+  {id:'LI_L',  name:'Lower Incisor Edge (L)',nx:.512,ny:.552,cat:'dental',      desc:'حافة القاطع السفلي الأيسر — أعلى السن الأمامي السفلي الأيسر\nTop edge of left lower front tooth (incisal edge)'},
+  {id:'LL_mid',name:'Lower Lip Midpoint',    nx:.500,ny:.590,cat:'soft_tissue', desc:'منتصف الشفة السفلى — أدنى نقطة في وسط الشفة السفلى\nLowest point of lower lip at facial midline'},
+  {id:'UDM_s', name:'Upper Dental Midline',  nx:.500,ny:.524,cat:'dental',      desc:'خط الوسط السني العلوي — الخط الفاصل بين القاطعين المركزيين العلويين\nVertical line between upper two central incisors'},
+  {id:'BCR',   name:'Buccal Corridor (R)',   nx:.278,ny:.534,cat:'dental',      desc:'الممر الخدي الأيمن — الفراغ المظلم خلف آخر سن ظاهر والخد الأيمن\nDark space between last visible right tooth and cheek'},
+  {id:'BCL',   name:'Buccal Corridor (L)',   nx:.722,ny:.534,cat:'dental',      desc:'الممر الخدي الأيسر — الفراغ المظلم خلف آخر سن ظاهر والخد الأيسر\nDark space between last visible left tooth and cheek'},
 ];
 const LM_MAP = { frontal:LM_FRONTAL, profile:LM_PROFILE, smile:LM_SMILE };
 
@@ -404,19 +403,79 @@ function mapMPtoLms(lms,W,H,photoType){
       {id:'Me', x:p(152).x,      y:p(152).y,                     c:.89}, // menton/chin
     ];
   }
-  if(photoType==='smile'){
-    const mw=p(291).x-p(61).x;
+  if(photoType==='profile'){
+    // Detect which way the face points: nose tip (4) x > 0.5 = face-right in image
+    const faceRight=lms[4].x>0.5;
+    // Tragus: index 234 = left ear (image-left = face-right), 454 = right ear (image-right = face-left)
+    const tragus=faceRight ? p(234) : p(454);
+    // Nose tip
+    const prn=p(4);
+    // Nasion (bridge of nose)
+    const nasion=p(168);
+    // Glabella: above nasion on forehead (index 9 is upper forehead midline)
+    const gl_raw=p(9);
+    const gl={x:gl_raw.x,y:gl_raw.y};
+    // Subnasale: between nose tip and upper lip — midpoint of 2 (nose base) and 0 (lip top)
+    const sn=mx(p(2),p(0));
+    // Upper lip most forward point
+    const ls=p(0);
+    // Stomion: midpoint of upper/lower inner lip
+    const sto=mx(p(13),p(14));
+    // Lower lip
+    const li=p(14);
+    // Soft-B: between lower lip and chin (index 18 = chin area)
+    const b_pt=mx(p(14),p(152));
+    // Soft tissue Pogonion: chin-most forward point (index 199)
+    const pog=p(199);
+    // Menton: lowest chin point
+    const me=p(152);
+    // Columella: between nose tip and subnasale
+    const cm=mx(p(4),p(2));
     return[
-      {id:'ChR_s', x:p(61).x,               y:p(61).y,  c:.95},
-      {id:'ChL_s', x:p(291).x,              y:p(291).y, c:.95},
-      {id:'UI_R',  x:p(82).x,               y:p(82).y,  c:.89}, // inner upper lip right
-      {id:'UI_L',  x:p(312).x,              y:p(312).y, c:.89}, // inner upper lip left
-      {id:'LI_R',  x:p(87).x,               y:p(87).y,  c:.89}, // inner lower lip right
-      {id:'LI_L',  x:p(317).x,              y:p(317).y, c:.89}, // inner lower lip left
-      {id:'LL_mid',x:p(17).x,               y:p(17).y,  c:.92}, // lower lip center
-      {id:'UDM_s', x:(p(61).x+p(291).x)/2,  y:p(13).y,  c:.85},
-      {id:'BCR',   x:p(61).x-mw*.2,         y:p(61).y,  c:.75},
-      {id:'BCL',   x:p(291).x+mw*.2,        y:p(291).y, c:.75},
+      {id:'Gl_p',  x:gl.x,    y:gl.y,    c:.82},
+      {id:'N_p',   x:nasion.x,y:nasion.y, c:.90},
+      {id:'Prn_p', x:prn.x,   y:prn.y,   c:.92},
+      {id:'Cm',    x:cm.x,    y:cm.y,    c:.85},
+      {id:'Sn_p',  x:sn.x,   y:sn.y,    c:.87},
+      {id:'Ls_p',  x:ls.x,    y:ls.y,    c:.88},
+      {id:'Sto',   x:sto.x,   y:sto.y,   c:.86},
+      {id:'Li_p',  x:li.x,    y:li.y,    c:.88},
+      {id:'B_p',   x:b_pt.x,  y:b_pt.y,  c:.82},
+      {id:'Pog_p', x:pog.x,   y:pog.y,   c:.84},
+      {id:'Me_p',  x:me.x,    y:me.y,    c:.87},
+      {id:'T',     x:tragus.x,y:tragus.y, c:.89},
+    ];
+  }
+  if(photoType==='smile'){
+    // Mouth corners
+    const chR=p(61), chL=p(291);
+    const mw=chL.x-chR.x;
+    // Upper incisor edges: use points on the inner upper gum-line / tooth boundary
+    // p(78)=right inner upper lip near tooth, p(308)=left; offset slightly down into tooth area
+    const toothOff=H*0.008; // small downward offset to hit incisal edge rather than lip edge
+    const uiR={x:p(78).x, y:p(78).y+toothOff};
+    const uiL={x:p(308).x,y:p(308).y+toothOff};
+    // Lower incisor edges: upper inner lower lip (p(95) right, p(324) left), shifted up
+    const liR={x:p(95).x, y:p(95).y-toothOff};
+    const liL={x:p(324).x,y:p(324).y-toothOff};
+    // Lower lip center
+    const llMid=p(17);
+    // Upper dental midline: midpoint between the two central incisors, at the lip aperture level
+    const udm={x:(chR.x+chL.x)/2, y:(p(78).y+p(308).y)/2};
+    // Buccal corridors: dark space beyond last visible tooth — estimate as ~25% beyond corners
+    const bcR={x:chR.x-mw*.25, y:chR.y};
+    const bcL={x:chL.x+mw*.25, y:chL.y};
+    return[
+      {id:'ChR_s', x:chR.x, y:chR.y,  c:.95},
+      {id:'ChL_s', x:chL.x, y:chL.y,  c:.95},
+      {id:'UI_R',  x:uiR.x, y:uiR.y,  c:.88},
+      {id:'UI_L',  x:uiL.x, y:uiL.y,  c:.88},
+      {id:'LI_R',  x:liR.x, y:liR.y,  c:.88},
+      {id:'LI_L',  x:liL.x, y:liL.y,  c:.88},
+      {id:'LL_mid',x:llMid.x,y:llMid.y,c:.92},
+      {id:'UDM_s', x:udm.x,  y:udm.y,  c:.85},
+      {id:'BCR',   x:bcR.x,  y:bcR.y,  c:.75},
+      {id:'BCL',   x:bcL.x,  y:bcL.y,  c:.75},
     ];
   }
   return null;
@@ -426,24 +485,6 @@ async function detectAndRefine(imgEl, photoType, onStatus){
   const defs=LM_MAP[photoType];
   const W=imgEl.naturalWidth,H=imgEl.naturalHeight;
   const fallback=defs.map(d=>({...d,x:d.nx*W,y:d.ny*H,confidence:.55}));
-  if(photoType==='profile'){
-    const ok=await ensureMediaPipe(onStatus);
-    if(ok){
-      try{
-        onStatus?.('Detecting face orientation…');
-        const res=_faceLP.detect(imgEl);
-        if(res.faceLandmarks?.length>0){
-          const lm=res.faceLandmarks[0];
-          // Nose tip (index 4) normalized x: >0.5 = face pointing right
-          if(lm[4].x>0.5){
-            onStatus?.('Face facing right — mirroring landmarks…');
-            return defs.map(d=>({...d,x:(1-d.nx)*W,y:d.ny*H,confidence:.58}));
-          }
-        }
-      }catch(e){console.warn('MP profile detect:',e);}
-    }
-    return fallback;
-  }
   const ok=await ensureMediaPipe(onStatus);
   if(!ok) return fallback;
   try{
@@ -690,6 +731,7 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
   const [showGolden,setShowGolden]=useState(false);
   const [drag,setDrag]=useState(null);
   const [dotSize,setDotSize]=useState(1.0);
+  const [zoom,setZoom]=useState(1.0);
   const [mode,setMode]=useState('normal');
   const [addPick,setAddPick]=useState(null);
   const [detecting,setDetecting]=useState(!initialLms);
@@ -705,18 +747,22 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
 
   const sc=Math.min(canvasW/imgW,(canvasW*.74)/imgH);
   const dw=imgW*sc,dh=imgH*sc,ox=(canvasW-dw)/2,oy=0;
-  const canvasH=Math.round(dh);
+  const baseH=Math.round(dh);
+  // Zoom-aware canvas dimensions and coordinate helpers
+  const zsc=sc*zoom,zdw=dw*zoom,zdh=dh*zoom,zox=Math.round(ox*zoom),zoy=0;
+  const cvW=Math.round(canvasW*zoom),cvH=Math.round(baseH*zoom);
+  const canvasH=cvH;
   const pointR=Math.max(2,Math.round(BASE_R*dotSize));
-  const toCanvas=(lm)=>({cx:ox+lm.x*sc,cy:oy+lm.y*sc});
-  const toImg=(cx,cy)=>({x:(cx-ox)/sc,y:(cy-oy)/sc});
+  const toCanvas=(lm)=>({cx:zox+lm.x*zsc,cy:zoy+lm.y*zsc});
+  const toImg=(cx,cy)=>({x:(cx-zox)/zsc,y:(cy-zoy)/zsc});
 
   function drawAll(){
     const cvs=canvasRef.current;if(!cvs)return;
     const ctx=cvs.getContext('2d');
-    ctx.clearRect(0,0,canvasW,canvasH);
+    ctx.clearRect(0,0,cvW,cvH);
     const img=imgRef.current;
-    if(img?.complete&&img?.naturalWidth) ctx.drawImage(img,ox,oy,dw,dh);
-    else{ctx.fillStyle='#1e293b';ctx.fillRect(0,0,canvasW,canvasH);}
+    if(img?.complete&&img?.naturalWidth) ctx.drawImage(img,zox,zoy,zdw,zdh);
+    else{ctx.fillStyle='#1e293b';ctx.fillRect(0,0,cvW,cvH);}
 
     if(showMidline&&photoType==='frontal'){
       const pts=['Gl','N','Sn','Me'].map(id=>lms.find(l=>l.id===id)).filter(Boolean);
@@ -733,18 +779,18 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
       if(gl&&me){
         const fh=toCanvas(me).cy-toCanvas(gl).cy,ty=toCanvas(gl).cy;
         ctx.strokeStyle='rgba(255,215,0,.9)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
-        [ty,ty+fh/3,ty+fh*2/3,ty+fh].forEach(y=>{ctx.beginPath();ctx.moveTo(ox,y);ctx.lineTo(ox+dw,y);ctx.stroke();});
+        [ty,ty+fh/3,ty+fh*2/3,ty+fh].forEach(y=>{ctx.beginPath();ctx.moveTo(zox,y);ctx.lineTo(zox+zdw,y);ctx.stroke();});
         ctx.fillStyle='rgba(255,215,0,.9)';ctx.font='10px sans-serif';ctx.setLineDash([]);
-        ctx.fillText('Upper 1/3',ox+4,ty+fh/6);ctx.fillText('Middle 1/3',ox+4,ty+fh/2);ctx.fillText('Lower 1/3',ox+4,ty+fh*5/6);
+        ctx.fillText('Upper 1/3',zox+4,ty+fh/6);ctx.fillText('Middle 1/3',zox+4,ty+fh/2);ctx.fillText('Lower 1/3',zox+4,ty+fh*5/6);
         const phi=1.618,phiY=ty+fh/phi;
         ctx.strokeStyle='rgba(255,100,200,.9)';ctx.lineWidth=2;ctx.setLineDash([]);
-        ctx.beginPath();ctx.moveTo(ox,phiY);ctx.lineTo(ox+dw,phiY);ctx.stroke();
-        ctx.fillStyle='rgba(255,100,200,.9)';ctx.font='10px sans-serif';ctx.fillText('φ',ox+4,phiY-3);
+        ctx.beginPath();ctx.moveTo(zox,phiY);ctx.lineTo(zox+zdw,phiY);ctx.stroke();
+        ctx.fillStyle='rgba(255,100,200,.9)';ctx.font='10px sans-serif';ctx.fillText('φ',zox+4,phiY-3);
       }
       if(photoType==='frontal'&&exR&&exL){
         const xR=toCanvas(exR).cx,xL=toCanvas(exL).cx,fw=xL-xR;
         ctx.strokeStyle='rgba(100,200,255,.85)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
-        [xR-fw/2,xR,xR+fw/2,xL,xL+fw/2].forEach(x=>{ctx.beginPath();ctx.moveTo(x,oy);ctx.lineTo(x,oy+dh);ctx.stroke();});
+        [xR-fw/2,xR,xR+fw/2,xL,xL+fw/2].forEach(x=>{ctx.beginPath();ctx.moveTo(x,zoy);ctx.lineTo(x,zoy+zdh);ctx.stroke();});
       }
       ctx.restore();
     }
@@ -767,7 +813,7 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
   drawAllRef.current=drawAll;
 
   useEffect(()=>{const img=new Image();img.src=imageUrl;imgRef.current=img;img.onload=()=>drawAllRef.current?.();},[imageUrl]);
-  useEffect(()=>{drawAll();},[lms,sel,hover,showLabels,showMidline,showGolden,canvasW,dotSize,mode]);
+  useEffect(()=>{drawAll();},[lms,sel,hover,showLabels,showMidline,showGolden,canvasW,dotSize,mode,zoom]);
 
   useEffect(()=>{
     if(initialLms){setDetecting(false);return;}
@@ -816,7 +862,7 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
   function onMove(e){
     const{mx,my}=getPos(e);
     if(drag){
-      const cxC=Math.max(ox,Math.min(ox+dw,mx)),cyC=Math.max(oy,Math.min(oy+dh,my));
+      const cxC=Math.max(zox,Math.min(zox+zdw,mx)),cyC=Math.max(zoy,Math.min(zoy+zdh,my));
       const{x,y}=toImg(cxC,cyC);
       setLms(prev=>prev.map(lm=>lm.id===drag.id?{...lm,x,y}:lm));
     }else{
@@ -826,6 +872,11 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
     }
   }
   function onUp(){setDrag(null);if(canvasRef.current)canvasRef.current.style.cursor=mode==='add'?'crosshair':'default';}
+  function onWheel(e){
+    e.preventDefault();
+    const delta=e.deltaY<0?1.15:1/1.15;
+    setZoom(z=>Math.max(0.5,Math.min(4.0,z*delta)));
+  }
 
   const movedCount=lms.filter(lm=>{const o=origLms.find(ol=>ol.id===lm.id);return o&&(Math.abs(lm.x-o.x)>1||Math.abs(lm.y-o.y)>1);}).length;
   const byCategory={};
@@ -862,6 +913,12 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
           {photoType==='frontal'&&<label className="cb-lbl"><input type="checkbox" checked={showMidline} onChange={e=>setShowMidline(e.target.checked)} style={{accentColor:'var(--blue)'}}/>Midline</label>}
           <label className="cb-lbl"><input type="checkbox" checked={showGolden} onChange={e=>setShowGolden(e.target.checked)} style={{accentColor:'#f59e0b'}}/><span style={{color:'#92400e'}}>Golden ratio</span></label>
           {photoType==='profile'&&<button className="btn btn-secondary" style={{fontSize:11,padding:'3px 10px',marginLeft:6}} title="Mirror all landmarks horizontally" onClick={()=>setLms(prev=>prev.map(l=>({...l,x:imgW-l.x})))}>Flip ↔</button>}
+          <div style={{display:'flex',alignItems:'center',gap:4,marginLeft:8,background:'var(--gray-100)',borderRadius:6,padding:'2px 6px'}}>
+            <button className="btn btn-secondary" style={{fontSize:14,padding:'0 7px',minWidth:26,lineHeight:'22px'}} title="Zoom out (or scroll wheel)" onClick={()=>setZoom(z=>Math.max(0.5,+(z/1.25).toFixed(2)))}>−</button>
+            <span style={{fontSize:11,minWidth:38,textAlign:'center',fontWeight:600,color:'var(--gray-700)'}}>{Math.round(zoom*100)}%</span>
+            <button className="btn btn-secondary" style={{fontSize:14,padding:'0 7px',minWidth:26,lineHeight:'22px'}} title="Zoom in (or scroll wheel)" onClick={()=>setZoom(z=>Math.min(4.0,+(z*1.25).toFixed(2)))}>+</button>
+            {zoom!==1.0&&<button className="btn-ghost" style={{fontSize:10,color:'var(--gray-500)',padding:'0 4px'}} onClick={()=>setZoom(1.0)}>1:1</button>}
+          </div>
         </div>
       </div>
       {mode==='add'&&(
@@ -872,17 +929,18 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
         </div>
       )}
       <div className="editor-layout">
-        <div className="canvas-wrap" ref={wrapRef}>
+        <div className="canvas-wrap" ref={wrapRef} style={{overflow:'auto',position:'relative'}}>
           {detecting&&(
             <div className="det-overlay">
               <div className="spinner-lg" style={{borderColor:'rgba(255,255,255,.3)',borderTopColor:'#fff'}}/>
               <p>{detectMsg||'Detecting landmarks…'}</p>
-              <p style={{fontSize:11,opacity:.7}}>{photoType==='profile'?'Anatomical defaults for profile view':'68-point AI landmark model'}</p>
+              <p style={{fontSize:11,opacity:.7}}>MediaPipe 478-point AI landmark model</p>
             </div>
           )}
-          <canvas ref={canvasRef} width={canvasW} height={canvasH}
+          <canvas ref={canvasRef} width={cvW} height={cvH}
             onMouseDown={onDown} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp}
-            onTouchStart={onDown} onTouchEnd={onUp} style={{display:'block'}}/>
+            onTouchStart={onDown} onTouchEnd={onUp} onWheel={onWheel}
+            style={{display:'block'}}/>
         </div>
         <div className="sidebar">
           <div className="card" style={{padding:10}}>
@@ -931,7 +989,14 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
             return lm?(
               <div className="detail-box">
                 <strong style={{color:'var(--gray-800)',fontSize:12}}>{lm.name}</strong>
-                <p style={{color:'var(--gray-500)',marginTop:3,fontFamily:'monospace',fontSize:10}}>x:{lm.x.toFixed(0)} y:{lm.y.toFixed(0)}</p>
+                {lm.desc&&(
+                  <div style={{marginTop:6,padding:'6px 8px',background:'var(--blue-50,#eff6ff)',borderRadius:6,borderLeft:'3px solid var(--blue)'}}>
+                    {lm.desc.split('\n').map((line,i)=>(
+                      <p key={i} style={{fontSize:11,color:i===0?'#1e40af':'#374151',lineHeight:1.45,marginBottom:i===0?3:0,fontWeight:i===0?500:400,direction:i===0?'rtl':'ltr',textAlign:i===0?'right':'left'}}>{line}</p>
+                    ))}
+                  </div>
+                )}
+                <p style={{color:'var(--gray-500)',marginTop:4,fontFamily:'monospace',fontSize:10}}>x:{lm.x.toFixed(0)} y:{lm.y.toFixed(0)}</p>
                 <p style={{color:'var(--gray-400)',fontSize:10}}>Conf: {Math.round((lm.confidence||.6)*100)}%</p>
                 <div style={{display:'flex',gap:5,marginTop:6,flexWrap:'wrap'}}>
                   {moved&&orig&&<button className="btn-ghost" style={{fontSize:10,color:'var(--blue)'}} onClick={()=>setLms(prev=>prev.map(l=>l.id===sel?{...l,x:orig.x,y:orig.y}:l))}>↩ Reset</button>}
