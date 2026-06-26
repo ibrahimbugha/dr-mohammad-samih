@@ -732,6 +732,8 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
   const [drag,setDrag]=useState(null);
   const [dotSize,setDotSize]=useState(1.0);
   const [zoom,setZoom]=useState(1.0);
+  const [pan,setPan]=useState({x:0,y:0});
+  const [panDrag,setPanDrag]=useState(null);
   const [mode,setMode]=useState('normal');
   const [addPick,setAddPick]=useState(null);
   const [detecting,setDetecting]=useState(!initialLms);
@@ -748,9 +750,10 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
   const sc=Math.min(canvasW/imgW,(canvasW*.74)/imgH);
   const dw=imgW*sc,dh=imgH*sc,ox=(canvasW-dw)/2,oy=0;
   const baseH=Math.round(dh);
-  // Zoom-aware canvas dimensions and coordinate helpers
-  const zsc=sc*zoom,zdw=dw*zoom,zdh=dh*zoom,zox=Math.round(ox*zoom),zoy=0;
-  const cvW=Math.round(canvasW*zoom),cvH=Math.round(baseH*zoom);
+  // Viewport approach: canvas stays fixed size, zoom+pan shift what's drawn inside it
+  const zsc=sc*zoom,zdw=dw*zoom,zdh=dh*zoom;
+  const zox=Math.round(ox*zoom)+pan.x, zoy=pan.y;
+  const cvW=canvasW, cvH=baseH;
   const canvasH=cvH;
   const pointR=Math.max(2,Math.round(BASE_R*dotSize));
   const toCanvas=(lm)=>({cx:zox+lm.x*zsc,cy:zoy+lm.y*zsc});
@@ -813,7 +816,7 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
   drawAllRef.current=drawAll;
 
   useEffect(()=>{const img=new Image();img.src=imageUrl;imgRef.current=img;img.onload=()=>drawAllRef.current?.();},[imageUrl]);
-  useEffect(()=>{drawAll();},[lms,sel,hover,showLabels,showMidline,showGolden,canvasW,dotSize,mode,zoom]);
+  useEffect(()=>{drawAll();},[lms,sel,hover,showLabels,showMidline,showGolden,canvasW,dotSize,mode,zoom,pan]);
 
   useEffect(()=>{
     if(initialLms){setDetecting(false);return;}
@@ -857,7 +860,7 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
       setSel(addPick.id);return;
     }
     if(hit){setSel(hit.id);setDrag({id:hit.id});if(canvasRef.current)canvasRef.current.style.cursor='grabbing';}
-    else setSel(null);
+    else{setSel(null);if(zoom>1.0)setPanDrag({sx:mx,sy:my,px:pan.x,py:pan.y});if(canvasRef.current)canvasRef.current.style.cursor=zoom>1.0?'grabbing':'default';}
   }
   function onMove(e){
     const{mx,my}=getPos(e);
@@ -865,17 +868,22 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
       const cxC=Math.max(zox,Math.min(zox+zdw,mx)),cyC=Math.max(zoy,Math.min(zoy+zdh,my));
       const{x,y}=toImg(cxC,cyC);
       setLms(prev=>prev.map(lm=>lm.id===drag.id?{...lm,x,y}:lm));
+    }else if(panDrag){
+      const nx=panDrag.px+(mx-panDrag.sx),ny=panDrag.py+(my-panDrag.sy);
+      // Clamp: keep at least half the image visible
+      const minX=-(zdw-cvW/2),maxX=cvW/2,minY=-(zdh-cvH/2),maxY=cvH/2;
+      setPan({x:Math.max(minX,Math.min(maxX,nx)),y:Math.max(minY,Math.min(maxY,ny))});
     }else{
       const hit=hitTest(mx,my),hid=hit?.id??null;
       if(hid!==hover)setHover(hid);
-      if(canvasRef.current)canvasRef.current.style.cursor=mode==='add'?'crosshair':hit?'grab':'default';
+      if(canvasRef.current)canvasRef.current.style.cursor=mode==='add'?'crosshair':hit?'grab':zoom>1.0?'grab':'default';
     }
   }
-  function onUp(){setDrag(null);if(canvasRef.current)canvasRef.current.style.cursor=mode==='add'?'crosshair':'default';}
+  function onUp(){setDrag(null);setPanDrag(null);if(canvasRef.current)canvasRef.current.style.cursor=mode==='add'?'crosshair':zoom>1.0?'grab':'default';}
   function onWheel(e){
     e.preventDefault();
     const delta=e.deltaY<0?1.15:1/1.15;
-    setZoom(z=>Math.max(0.5,Math.min(4.0,z*delta)));
+    setZoom(z=>Math.max(0.5,Math.min(4.0,+(z*delta).toFixed(3))));
   }
 
   const movedCount=lms.filter(lm=>{const o=origLms.find(ol=>ol.id===lm.id);return o&&(Math.abs(lm.x-o.x)>1||Math.abs(lm.y-o.y)>1);}).length;
@@ -914,10 +922,10 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
           <label className="cb-lbl"><input type="checkbox" checked={showGolden} onChange={e=>setShowGolden(e.target.checked)} style={{accentColor:'#f59e0b'}}/><span style={{color:'#92400e'}}>Golden ratio</span></label>
           {photoType==='profile'&&<button className="btn btn-secondary" style={{fontSize:11,padding:'3px 10px',marginLeft:6}} title="Mirror all landmarks horizontally" onClick={()=>setLms(prev=>prev.map(l=>({...l,x:imgW-l.x})))}>Flip ↔</button>}
           <div style={{display:'flex',alignItems:'center',gap:4,marginLeft:8,background:'var(--gray-100)',borderRadius:6,padding:'2px 6px'}}>
-            <button className="btn btn-secondary" style={{fontSize:14,padding:'0 7px',minWidth:26,lineHeight:'22px'}} title="Zoom out (or scroll wheel)" onClick={()=>setZoom(z=>Math.max(0.5,+(z/1.25).toFixed(2)))}>−</button>
+            <button className="btn btn-secondary" style={{fontSize:14,padding:'0 7px',minWidth:26,lineHeight:'22px'}} title="Zoom out (or scroll wheel)" onClick={()=>{setZoom(z=>{const nz=Math.max(0.5,+(z/1.25).toFixed(2));if(nz<=1.0)setPan({x:0,y:0});return nz;});}}>−</button>
             <span style={{fontSize:11,minWidth:38,textAlign:'center',fontWeight:600,color:'var(--gray-700)'}}>{Math.round(zoom*100)}%</span>
             <button className="btn btn-secondary" style={{fontSize:14,padding:'0 7px',minWidth:26,lineHeight:'22px'}} title="Zoom in (or scroll wheel)" onClick={()=>setZoom(z=>Math.min(4.0,+(z*1.25).toFixed(2)))}>+</button>
-            {zoom!==1.0&&<button className="btn-ghost" style={{fontSize:10,color:'var(--gray-500)',padding:'0 4px'}} onClick={()=>setZoom(1.0)}>1:1</button>}
+            {zoom!==1.0&&<button className="btn-ghost" style={{fontSize:10,color:'var(--gray-500)',padding:'0 4px'}} onClick={()=>{setZoom(1.0);setPan({x:0,y:0});}}>1:1</button>}
           </div>
         </div>
       </div>
@@ -929,7 +937,7 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
         </div>
       )}
       <div className="editor-layout">
-        <div className="canvas-wrap" ref={wrapRef} style={{overflow:'auto',position:'relative'}}>
+        <div className="canvas-wrap" ref={wrapRef} style={{position:'relative',overflow:'hidden'}}>
           {detecting&&(
             <div className="det-overlay">
               <div className="spinner-lg" style={{borderColor:'rgba(255,255,255,.3)',borderTopColor:'#fff'}}/>
