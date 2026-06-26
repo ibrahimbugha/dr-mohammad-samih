@@ -407,63 +407,49 @@ function mapMPtoLms(lms,W,H,photoType){
     // nose tip x > 0.5 → face points RIGHT in image
     const faceRight=lms[4].x>0.5;
     // dir: +1 = face points right, -1 = face points left
-    // posterior direction (toward ear) = -dir * magnitude
+    // "posterior" (toward ear) = -dir; "anterior" (toward nose) = +dir
     const dir=faceRight?1:-1;
 
-    // --- RELIABLE from MediaPipe in profile (on the visible silhouette) ---
-    const prn=p(4);           // pronasale (nose tip) — always reliable
-    const me=p(152);          // menton (chin bottom) — reliable
-    const sn=p(2);            // subnasale — reasonable
-    const ls=p(13);           // labrale superius (upper lip) — reliable
-    const li=p(14);           // labrale inferius (lower lip) — reliable
-    const sto=mx(ls,li);      // stomion
-    const cm=mx(prn,sn);      // columella
+    const prn=p(4);      // pronasale — reliable in profile
+    const meRaw=p(152);  // menton — y reliable, x may be off (MediaPipe projects inside face)
+    const faceH=meRaw.y-prn.y;
 
-    // --- CALCULATED PROPORTIONALLY (p(9) and p(168) land in hair in profile) ---
-    const faceH=me.y-prn.y;   // nose-tip to chin in px
-    const totFH=faceH/0.48;   // estimated full face height (hairline→chin)
+    // Sanity check — if face height is implausible, bail out so caller uses smart fallback
+    if(faceH<H*0.12||faceH<=0) return null;
 
-    // Nasion: on nose bridge, above nose tip (~17% of total face height above prn)
-    // slightly posterior to nose tip
-    const nasion={
-      x: prn.x - dir*totFH*0.03,
-      y: prn.y - totFH*0.17
-    };
-    // Glabella: above nasion (~8% totFH), slightly anterior
-    const gl={
-      x: nasion.x + dir*totFH*0.015,
-      y: nasion.y - totFH*0.08
-    };
-    // Pogonion: most forward chin point — near nose x level, slightly posterior
-    const pog={
-      x: prn.x - dir*totFH*0.08,
-      y: me.y  - totFH*0.05
-    };
-    // Soft-tissue B: between lower lip and pogonion, more posterior
-    const b_pt={
-      x: li.x*0.25 + pog.x*0.75,
-      y: li.y*0.25 + pog.y*0.75
-    };
-    // Tragus: far posterior from nose, approximately at nasion height
-    // ear is ~42-48% of total face height posterior to nose tip
-    const tragus={
-      x: prn.x - dir*totFH*0.45,
-      y: nasion.y + totFH*0.04
-    };
+    const totFH=faceH/0.48; // estimated full face height (hairline to chin)
+
+    // Reliable silhouette landmarks from MediaPipe
+    const sn=p(2);           // subnasale
+    const ls=p(13);          // labrale superius (upper lip)
+    const li=p(14);          // labrale inferius (lower lip)
+    const sto=mx(ls,li);
+    const cm=mx(prn,sn);
+
+    // Me_p: y from MediaPipe (reliable), x calculated (MediaPipe x drifts off silhouette)
+    const me={x:prn.x-dir*totFH*0.10, y:meRaw.y};
+
+    // All other landmarks calculated proportionally from nose-tip + face-height
+    // (MediaPipe indices for forehead, ear, chin-x are unreliable in true profile view)
+    const nasion={x:prn.x-dir*totFH*0.030, y:prn.y-totFH*0.17};
+    const gl    ={x:nasion.x+dir*totFH*0.015, y:nasion.y-totFH*0.08};
+    const pog   ={x:me.x,                     y:me.y-totFH*0.05};
+    const b_pt  ={x:li.x*0.20+pog.x*0.80,     y:li.y*0.20+pog.y*0.80};
+    const tragus={x:prn.x-dir*totFH*0.45,     y:nasion.y+totFH*0.03};
 
     return[
-      {id:'Gl_p',  x:gl.x,     y:gl.y,     c:.68},
-      {id:'N_p',   x:nasion.x, y:nasion.y, c:.72},
+      {id:'Gl_p',  x:gl.x,     y:gl.y,     c:.65},
+      {id:'N_p',   x:nasion.x, y:nasion.y, c:.70},
       {id:'Prn_p', x:prn.x,    y:prn.y,    c:.93},
       {id:'Cm',    x:cm.x,     y:cm.y,     c:.85},
       {id:'Sn_p',  x:sn.x,     y:sn.y,     c:.87},
       {id:'Ls_p',  x:ls.x,     y:ls.y,     c:.88},
       {id:'Sto',   x:sto.x,    y:sto.y,    c:.86},
       {id:'Li_p',  x:li.x,     y:li.y,     c:.88},
-      {id:'B_p',   x:b_pt.x,   y:b_pt.y,  c:.70},
-      {id:'Pog_p', x:pog.x,    y:pog.y,    c:.72},
-      {id:'Me_p',  x:me.x,     y:me.y,     c:.87},
-      {id:'T',     x:tragus.x, y:tragus.y, c:.68},
+      {id:'B_p',   x:b_pt.x,   y:b_pt.y,  c:.68},
+      {id:'Pog_p', x:pog.x,    y:pog.y,    c:.70},
+      {id:'Me_p',  x:me.x,     y:me.y,     c:.80},
+      {id:'T',     x:tragus.x, y:tragus.y, c:.65},
     ];
   }
   if(photoType==='smile'){
@@ -502,8 +488,44 @@ function mapMPtoLms(lms,W,H,photoType){
 async function detectAndRefine(imgEl, photoType, onStatus){
   const defs=LM_MAP[photoType];
   const W=imgEl.naturalWidth,H=imgEl.naturalHeight;
+  // Direction-aware fallback for profile (LM_PROFILE nx/ny are defined for face-RIGHT)
+  const profileFallback=(faceRight)=>defs.map(d=>({
+    ...d,
+    x: faceRight ? d.nx*W : (1-d.nx)*W,
+    y: d.ny*H,
+    confidence:.58
+  }));
   const fallback=defs.map(d=>({...d,x:d.nx*W,y:d.ny*H,confidence:.55}));
+
   const ok=await ensureMediaPipe(onStatus);
+
+  // ── Profile: special handling ──────────────────────────────────────────────
+  if(photoType==='profile'){
+    let faceRight=false; // clinical default: face points left (right profile view)
+    if(ok){
+      try{
+        onStatus?.('Detecting face direction & landmarks…');
+        const res=_faceLP.detect(imgEl);
+        if(res.faceLandmarks?.length>0){
+          const lms=res.faceLandmarks[0];
+          faceRight=lms[4].x>0.5;
+          const mapped=mapMPtoLms(lms,W,H,'profile');
+          if(mapped){
+            const defMap=Object.fromEntries(defs.map(d=>[d.id,d]));
+            return mapped.map(lm=>({...defMap[lm.id],x:lm.x,y:lm.y,confidence:lm.c}));
+          }
+          // mapMPtoLms returned null (implausible faceH) — use direction-aware fallback
+          onStatus?.('Proportional profile defaults (face '+(faceRight?'right':'left')+')');
+          return profileFallback(faceRight);
+        }
+      }catch(e){console.warn('Profile detect error:',e);}
+    }
+    // No detection at all — use default (face-left = right-profile, common in clinics)
+    onStatus?.('Profile defaults — adjust direction with Flip ↔ if needed');
+    return profileFallback(faceRight);
+  }
+
+  // ── Frontal & Smile ────────────────────────────────────────────────────────
   if(!ok) return fallback;
   try{
     onStatus?.('Detecting face landmarks…');
