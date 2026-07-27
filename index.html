@@ -74,8 +74,8 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f4f8;c
 /* ── Upload ── */
 .upload-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
 @media(max-width:700px){.upload-grid{grid-template-columns:1fr}}
-.drop-zone{border:2px dashed var(--gray-300);border-radius:12px;height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;text-align:center;padding:16px;user-select:none;background:var(--gray-50)}
-.drop-zone:hover,.drop-zone.dragover{border-color:var(--blue);background:var(--blue-light);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.drop-zone{border:2px dashed var(--gray-300);border-radius:12px;height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .20s;text-align:center;padding:16px;user-select:none;background:linear-gradient(160deg,var(--gray-50) 0%,#f8fafc 100%)}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--blue);background:var(--blue-light);transform:translateY(-3px);box-shadow:0 8px 24px rgba(37,99,235,.13),0 2px 6px rgba(37,99,235,.08);border-style:solid}
 .drop-zone input{display:none}
 .drop-zone .dz-icon{font-size:36px;margin-bottom:10px;opacity:.7}
 .drop-zone p{font-size:13px;font-weight:600;color:var(--gray-600)}
@@ -143,10 +143,11 @@ canvas{display:block}
 .class-I{background:#dcfce7;color:#15803d}.class-II{background:#fef9c3;color:#854d0e}.class-III{background:#fee2e2;color:#b91c1c}
 .note-box{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:11px;color:#92400e;margin-top:10px;line-height:1.5}
 .kf{background:linear-gradient(135deg,#eff6ff,#f0f9ff);border:1px solid #bfdbfe;border-radius:16px;padding:20px 24px;margin-bottom:20px;box-shadow:var(--shadow-sm)}
-.kf h2{font-size:13px;font-weight:700;color:#1e40af;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:8px}
-.kf-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;margin-bottom:8px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.7)}
+.kf h2{font-size:13px;font-weight:700;color:#1e40af;margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:8px}
+.kf-item{display:flex;align-items:flex-start;gap:10px;font-size:12.5px;margin-bottom:6px;padding:8px 12px;border-radius:9px;background:rgba(255,255,255,.8);border:1px solid rgba(0,0,0,.04);transition:box-shadow .15s}
+.kf-item:hover{box-shadow:0 2px 8px rgba(0,0,0,.07)}
 .kf-icon{font-size:15px;flex-shrink:0;margin-top:1px}
-.kf-text{flex:1;line-height:1.5;font-weight:500}
+.kf-text{flex:1;line-height:1.55;font-weight:500}
 .kf-text.normal{color:#15803d}.kf-text.borderline{color:#92400e}.kf-text.abnormal{color:#b91c1c}.kf-text.info{color:#1e40af}
 .disclaimer{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:16px 18px;font-size:11px;color:var(--gray-500);margin-top:24px;line-height:1.7}
 .pid-input{border:1.5px solid var(--gray-200);border-radius:8px;padding:7px 12px;font-size:14px;width:180px;outline:none;font-family:'Inter',monospace;font-weight:600}
@@ -157,13 +158,13 @@ canvas{display:block}
 .archive-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px;margin-top:20px}
 .archive-card{background:#fff;border:1.5px solid var(--gray-200);border-radius:16px;padding:20px;cursor:pointer;transition:all .18s;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
 .archive-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3b82f6,#6366f1);opacity:0;transition:opacity .18s}
-.archive-card:hover{border-color:#bfdbfe;box-shadow:0 8px 24px rgba(37,99,235,.12),0 2px 6px rgba(0,0,0,.06);transform:translateY(-3px)}.archive-card:hover::before{opacity:1}
+.archive-card:hover{border-color:#bfdbfe;box-shadow:0 8px 24px rgba(37,99,235,.12),0 2px 6px rgba(0,0,0,.06);transform:translateY(-3px)}.archive-card:hover::before{opacity:1}.archive-card:hover .arc-arrow{transform:translateX(3px)}.arc-arrow{display:inline-block;transition:transform .18s}
 .archive-pid{font-size:20px;font-weight:800;color:var(--gray-900);font-family:'Inter',monospace;letter-spacing:-.02em}
 .archive-ts{font-size:11px;color:var(--gray-400);margin-top:3px;margin-bottom:12px;font-weight:500}
 .archive-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .archive-del{position:absolute;top:12px;right:12px;background:none;border:none;font-size:14px;cursor:pointer;color:var(--gray-300);padding:5px;border-radius:7px;line-height:1;transition:all .15s}
 .archive-del:hover{background:var(--red-light);color:var(--red)}
-.archive-empty{text-align:center;padding:80px 20px;color:var(--gray-400)}
+.archive-empty{text-align:center;padding:80px 20px;color:var(--gray-400);background:var(--gray-50);border-radius:16px;border:1px dashed var(--gray-200);margin-top:12px}
 .archive-empty .empty-icon{font-size:56px;margin-bottom:14px;opacity:.6}
 .archive-search{border:1.5px solid var(--gray-200);border-radius:10px;padding:9px 14px;font-size:13px;width:100%;max-width:340px;outline:none;font-weight:500;transition:border-color .15s}
 .archive-search:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
@@ -634,7 +635,11 @@ function analyseThirds(frontal,sc){
 function analyseSkeletal(profile,sc){
   const prn=g(profile,'Prn_p'),sn=g(profile,'Sn_p'),ls=g(profile,'Ls_p');
   const li=g(profile,'Li_p'),pog=g(profile,'Pog_p'),cm=g(profile,'Cm');
+  const gl=g(profile,'Gl_p');
   const nasolabial=cm&&sn&&ls?angleDeg(cm,sn,ls):null;
+  // Soft-tissue facial convexity angle: Gl–Sn–Pog at vertex Sn. Norm 165–175° (straight profile).
+  // < 165° = convex (Class II), > 175° = concave (Class III).
+  const convexity=gl&&sn&&pog?angleDeg(gl,sn,pog):null;
   // fdir: +1=face-right, -1=face-left. Used to normalise sign convention so that
   // positive E-plane values always mean "anterior to E-line" (protrusive)
   // and positive pogSn always means "Pog in front of Sn vertical" (Class III direction).
@@ -649,30 +654,30 @@ function analyseSkeletal(profile,sc){
   if(pog&&sn&&sc)pogSn=r1(fdir*(pog.x-sn.x)*sc);
   let cls='Class I';
   if(lowerE!==null){if(lowerE>1)cls='Class III tendency';else if(lowerE<-4)cls='Class II tendency';}
-  return{cls,nasolabial,upperE,lowerE,pogSn};
+  return{cls,nasolabial,convexity,upperE,lowerE,pogSn};
 }
 function analyseLip(profile,sc){
   const sn=g(profile,'Sn_p'),sto=g(profile,'Sto'),li=g(profile,'Li_p');
   const me=g(profile,'Me_p'),cm=g(profile,'Cm'),ls=g(profile,'Ls_p');
   const b=g(profile,'B_p'),pog=g(profile,'Pog_p'),prn=g(profile,'Prn_p');
+  const np=g(profile,'N_p');
   const mm=(v)=>v!==null&&sc?r1(v*sc):null;
   const ulLen=sn&&sto?mm(dist(sn,sto)):null;
   const llLen=sto&&me?mm(dist(sto,me)):null;
   const gap=ls&&li?Math.max(0,mm(li.y-ls.y)):null;
   const nasolabial=cm&&sn&&ls?angleDeg(cm,sn,ls):null;
   const mentolabial=li&&b&&pog?angleDeg(li,b,pog):null;
-  const fdir=getFaceDir(profile);
-  let upperE=null,lowerE=null;
-  if(prn&&pog&&ls&&li&&sc){
-    upperE=r1(-fdir*ptLineSigned(ls.x,ls.y,prn.x,prn.y,pog.x,pog.y)*sc);
-    lowerE=r1(-fdir*ptLineSigned(li.x,li.y,prn.x,prn.y,pog.x,pog.y)*sc);
-  }
+  // Goode's ratio: horizontal nose projection (Sn→Prn) / nose length (N_p→Prn_p). Norm 0.55–0.60.
+  const nosePrj=prn&&sn&&sc?r1(Math.abs(prn.x-sn.x)*sc):null;
+  const noseLen=prn&&np&&sc?r1(dist(np,prn)*sc):null;
+  const goodesRatio=nosePrj&&noseLen&&noseLen>0?Math.round(nosePrj/noseLen*100)/100:null;
   const flags=[];
   if(ulLen&&(ulLen<19||ulLen>24))flags.push(1);
   if(gap!==null&&gap>3)flags.push(1);
   if(nasolabial&&(nasolabial<90||nasolabial>110))flags.push(1);
   const flag=flags.length>=2?'abnormal':flags.length?'borderline':'within_normal_limits';
-  return{ulLen,llLen,gap,nasolabial,mentolabial,upperE,lowerE,flag};
+  // E-plane calculated in analyseSkeletal — referenced via skel in doAnalyse to avoid duplication
+  return{ulLen,llLen,gap,nasolabial,mentolabial,nosePrj,noseLen,goodesRatio,flag};
 }
 function analyseSmile(smile,sc){
   const uiR=g(smile,'UI_R'),uiL=g(smile,'UI_L');
@@ -710,7 +715,7 @@ function analyseOJ(smile,sc){
   const obCls=ob===null?'not_measured':ob<0?'open_bite':ob<1?'edge_to_edge':ob<=4?'normal':ob<=6?'increased':'severely_increased';
   return{oj,ob,ojCls,obCls};
 }
-function doAnalyse(confirmed,ipdMm){
+function doAnalyse(confirmed,ipdMm,ethnicity='caucasian',notes=''){
   const sc=calibScale(confirmed.frontal,ipdMm);
   const sym=analyseSymmetry(confirmed.frontal,sc);
   const thirds=analyseThirds(confirmed.frontal,sc);
@@ -719,6 +724,9 @@ function doAnalyse(confirmed,ipdMm){
   const smile=analyseSmile(confirmed.smile,sc);
   const mid=analyseMidline(confirmed.frontal,confirmed.smile,sc);
   const oj=analyseOJ(confirmed.smile,sc);
+  // E-plane norms by ethnicity (Caucasian: Ricketts 1968; Arab/Middle Eastern: Bishara 1986)
+  const eNorms={caucasian:{upper:-4,lower:-2},arab:{upper:-2,lower:0},asian:{upper:-4,lower:-2},african:{upper:-2,lower:1}};
+  const eNorm=eNorms[ethnicity]||eNorms.caucasian;
   const findings=[];
   const add=(text,level)=>findings.push({text,level});
   if(sym.flag==='abnormal') add(`Facial asymmetry: chin deviation ${sym.chinDev} mm (threshold 2 mm).`,'abnormal');
@@ -726,15 +734,45 @@ function doAnalyse(confirmed,ipdMm){
   else if(sym.flag==='within_normal_limits') add(`Facial symmetry: within normal limits.`,'normal');
   if(thirds.flag!=='within_normal_limits') add(`Facial thirds imbalance: middle ${thirds.midPct}%, lower ${thirds.lowPct}% (ideal 33.3%).`,thirds.flag);
   else add(`Facial thirds: balanced (≈33% each).`,'normal');
+  // Facial convexity
+  if(skel.convexity!==null){
+    if(skel.convexity<165) add(`Convex facial profile: ${skel.convexity}° (norm 165–175°) — Class II skeletal tendency.`,skel.convexity<158?'abnormal':'borderline');
+    else if(skel.convexity>175) add(`Concave facial profile: ${skel.convexity}° (norm 165–175°) — Class III skeletal tendency.`,skel.convexity>182?'abnormal':'borderline');
+    else add(`Facial convexity: ${skel.convexity}° — straight profile within normal limits.`,'normal');
+  }
   if(skel.cls) add(`Soft-tissue skeletal estimate: ${skel.cls}.`,skel.cls==='Class I'?'normal':skel.cls.includes('III')?'abnormal':'borderline');
-  if(lip.flag!=='within_normal_limits'&&lip.gap!==null&&lip.gap>3) add(`Lip incompetence: interlabial gap ${lip.gap} mm at rest (norm 0–3 mm).`,lip.flag);
+  if(lip.gap!==null&&lip.gap>3) add(`Lip incompetence: interlabial gap ${lip.gap} mm at rest (norm 0–3 mm).`,lip.gap>5?'abnormal':'borderline');
   else if(lip.flag==='within_normal_limits') add(`Lip competence: within normal limits.`,'normal');
   if(smile.arc==='flat'||smile.arc==='reverse') add(`Smile arc: ${smile.arc} (consonant preferred).`,smile.arc==='reverse'?'abnormal':'borderline');
   else if(smile.arc==='consonant') add(`Smile arc: consonant (aesthetic ideal).`,'normal');
   if(mid.flag!=='within_normal_limits') add(`Dental midline: UDM ${mid.udmDev??'—'} mm from facial midline.`,mid.flag);
   if(oj.ojCls!=='normal'&&oj.ojCls!=='not_measured') add(`Overjet estimate: ${oj.oj} mm — ${oj.ojCls.replace(/_/g,' ')}.`,oj.ojCls.includes('severe')?'abnormal':'borderline');
+  if(oj.obCls!=='normal'&&oj.obCls!=='not_measured') add(`Overbite estimate: ${oj.ob} mm — ${oj.obCls.replace(/_/g,' ')}.`,['open_bite','severely_increased'].includes(oj.obCls)?'abnormal':'borderline');
+  // Nasolabial angle
+  if(skel.nasolabial!==null&&(skel.nasolabial<90||skel.nasolabial>110)){
+    const acute=skel.nasolabial<90;
+    add(`${acute?'Acute':'Obtuse'} nasolabial angle: ${skel.nasolabial}° (norm 90–110°) — ${acute?'over-projected or depressed tip':'retrusive upper lip or over-rotated tip'}.`,skel.nasolabial<85||skel.nasolabial>120?'abnormal':'borderline');
+  }
+  // E-plane (ethnicity-adjusted norms)
+  if(skel.lowerE!==null&&(skel.lowerE>eNorm.lower+2||skel.lowerE<eNorm.lower-6)){
+    const protruded=skel.lowerE>eNorm.lower;
+    add(`Lower lip ${protruded?'protrusion':'retrusion'}: ${skel.lowerE} mm vs E-plane (${ethnicity} norm ${eNorm.lower>0?'+':''}${eNorm.lower} mm).`,skel.lowerE>eNorm.lower+4||skel.lowerE<eNorm.lower-8?'abnormal':'borderline');
+  }
+  // Mentolabial fold
+  if(lip.mentolabial!==null&&(lip.mentolabial<120||lip.mentolabial>135)){
+    const acute=lip.mentolabial<120;
+    add(`${acute?'Acute':'Obtuse'} mentolabial fold: ${lip.mentolabial}° (norm 120–135°) — ${acute?'prominent chin or deep fold':'retruded chin'}.`,'borderline');
+  }
+  // Goode's ratio
+  if(lip.goodesRatio!==null&&(lip.goodesRatio<0.55||lip.goodesRatio>0.60)){
+    add(`Nose projection (Goode's ratio): ${lip.goodesRatio} (norm 0.55–0.60) — ${lip.goodesRatio<0.55?'under-projected':'over-projected'} nose.`,'borderline');
+  }
+  // Upper lip length
+  if(lip.ulLen!==null&&(lip.ulLen<19||lip.ulLen>24)){
+    add(`Upper lip length: ${lip.ulLen} mm (norm 19–24 mm) — ${lip.ulLen<19?'short upper lip':'long upper lip'}.`,'borderline');
+  }
   if(!findings.length) add('All assessed parameters are within normal limits.','normal');
-  return{sym,thirds,skel,lip,smile,mid,oj,findings,scale:sc,ts:new Date().toLocaleString()};
+  return{sym,thirds,skel,lip,smile,mid,oj,findings,scale:sc,ts:new Date().toLocaleString(),ethnicity,eNorm,notes};
 }
 
 // ── Excel export ───────────────────────────────────────────────────────────────
@@ -769,10 +807,12 @@ function exportExcel(report,pid,ipdMm){
   rows.push({Measurement:'',Value:'',Normal_Range:''});
 
   rows.push({Measurement:'=== SKELETAL CLASS (soft-tissue) ===',Value:'',Normal_Range:''});
+  row('Ethnicity/norm set',report.ethnicity);
   row('Class estimate',report.skel.cls);
+  row('Facial convexity (Gl–Sn–Pog)',report.skel.convexity,'165–175°','°');
   row('Nasolabial angle (Cm–Sn–Ls)',report.skel.nasolabial,'90–110°','°');
-  row('Upper lip to E-plane',report.skel.upperE,'−4 mm (Caucasian)','mm');
-  row('Lower lip to E-plane',report.skel.lowerE,'−2 mm (Caucasian)','mm');
+  row('Upper lip to E-plane',report.skel.upperE,`${report.eNorm?.upper??-4} mm (${report.ethnicity})`,'mm');
+  row('Lower lip to E-plane',report.skel.lowerE,`${report.eNorm?.lower??-2} mm (${report.ethnicity})`,'mm');
   row("Pog' to Sn vertical",report.skel.pogSn,'≈ 0 mm (Class I)','mm');
   rows.push({Measurement:'',Value:'',Normal_Range:''});
 
@@ -782,8 +822,7 @@ function exportExcel(report,pid,ipdMm){
   row('Interlabial gap (rest)',report.lip.gap,'0–3 mm','mm');
   row('Nasolabial angle',report.lip.nasolabial,'90–110°','°');
   row('Mentolabial fold angle',report.lip.mentolabial,'120–135°','°');
-  row('Upper lip to E-plane',report.lip.upperE,'−4 mm','mm');
-  row('Lower lip to E-plane',report.lip.lowerE,'−2 mm','mm');
+  row("Nose projection (Goode's ratio)",report.lip.goodesRatio,'0.55–0.60','');
   row('Lip competence assessment',report.lip.flag?.replace(/_/g,' '));
   rows.push({Measurement:'',Value:'',Normal_Range:''});
 
@@ -933,9 +972,24 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
         e.preventDefault();setLms(prev=>prev.filter(l=>l.id!==sel));setSel(null);
       }
       if(e.key==='Escape'){setMode('normal');setAddPick(null);setSel(null);}
+      // Arrow key nudge: 1px per press, 5px with Shift held
+      if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)&&sel&&document.activeElement.tagName!=='INPUT'){
+        e.preventDefault();
+        const d=e.shiftKey?5:1;
+        const dx=e.key==='ArrowLeft'?-d:e.key==='ArrowRight'?d:0;
+        const dy=e.key==='ArrowUp'?-d:e.key==='ArrowDown'?d:0;
+        setLms(prev=>prev.map(lm=>lm.id===sel?{...lm,x:Math.max(0,Math.min(imgW,lm.x+dx)),y:Math.max(0,Math.min(imgH,lm.y+dy))}:lm));
+      }
     }
     window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);
   },[sel]);
+
+  async function reDetect(){
+    setDetecting(true);setDetectMsg('');
+    const img=new Image();img.src=imageUrl;
+    img.onload=async()=>{const r=await detectAndRefine(img,photoType,msg=>setDetectMsg(msg));setLms(r);setDetecting(false);setDetectMsg('');};
+    img.onerror=()=>setDetecting(false);
+  }
 
   function hitTest(mx,my){
     const hitR=Math.max(10,pointR*2.5);
@@ -1039,6 +1093,9 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
           {photoType==='frontal'&&<label className="cb-lbl"><input type="checkbox" checked={showMidline} onChange={e=>setShowMidline(e.target.checked)} style={{accentColor:'var(--blue)'}}/>Midline</label>}
           <label className="cb-lbl"><input type="checkbox" checked={showGolden} onChange={e=>setShowGolden(e.target.checked)} style={{accentColor:'#f59e0b'}}/><span style={{color:'#92400e'}}>Golden ratio</span></label>
           {photoType==='profile'&&<button className="btn btn-secondary" style={{fontSize:11,padding:'3px 10px',marginLeft:6}} title="Mirror all landmarks horizontally" onClick={()=>setLms(prev=>prev.map(l=>({...l,x:imgW-l.x})))}>Flip ↔</button>}
+          <button className="btn btn-secondary" style={{fontSize:11,padding:'3px 10px'}} title="Re-run AI detection" onClick={reDetect} disabled={detecting}>
+            {detecting?<span className="spinner-sm"/>:'🔄'} Re-detect
+          </button>
           <div style={{display:'flex',alignItems:'center',gap:4,marginLeft:8,background:'var(--gray-100)',borderRadius:6,padding:'2px 6px'}}>
             <button className="btn btn-secondary" style={{fontSize:14,padding:'0 7px',minWidth:26,lineHeight:'22px'}} title="Zoom out (or scroll wheel)" onClick={()=>{setZoom(z=>{const nz=Math.max(0.5,+(z/1.25).toFixed(2));if(nz<=1.0)setPan({x:0,y:0});return nz;});}}>−</button>
             <span style={{fontSize:11,minWidth:38,textAlign:'center',fontWeight:600,color:'var(--gray-700)'}}>{Math.round(zoom*100)}%</span>
@@ -1135,8 +1192,10 @@ function LandmarkEditor({photoType,imageUrl,imgW,imgH,onConfirm,onBack,initialLm
       </div>
       <div className="confirm-strip no-print">
         <div>
-          <p style={{fontWeight:600,color:'var(--green)',fontSize:13}}>✅ {lms.length} landmarks ready to confirm</p>
-          <p style={{fontSize:11,color:'#166534',marginTop:2}}>Drag to correct · Add/Delete with buttons · Del key removes selected</p>
+          {(()=>{const avgConf=Math.round(lms.reduce((a,l)=>a+(l.confidence||.6),0)/lms.length*100);const cc=avgConf>=80?'var(--green)':avgConf>=65?'var(--amber)':'var(--gray-400)';return(
+            <p style={{fontWeight:600,color:'var(--green)',fontSize:13}}>✅ {lms.length} landmarks · avg confidence: <span style={{color:cc}}>{avgConf}%</span></p>
+          );})()}
+          <p style={{fontSize:11,color:'#166534',marginTop:2}}>Drag or ↑↓←→ to refine · Shift+Arrow = 5px nudge · Add/Delete with buttons</p>
         </div>
         <button className="btn btn-primary btn-lg" onClick={()=>onConfirm(lms)}>Confirm Landmarks →</button>
       </div>
@@ -1261,28 +1320,28 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive}){
         </RCard>
         <RCard title="Skeletal Class Estimate">
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-            <span style={{fontSize:12,color:'var(--gray-500)'}}>Soft-tissue estimate</span>
+            <span style={{fontSize:12,color:'var(--gray-500)'}}>Soft-tissue estimate · <em style={{textTransform:'capitalize'}}>{report.ethnicity||'caucasian'} norms</em></span>
             <span className={`badge ${report.skel.cls?.includes('III')?'class-III':report.skel.cls?.includes('II')?'class-II':'class-I'}`} style={{padding:'4px 12px',fontWeight:700}}>{report.skel.cls}</span>
           </div>
           <table className="meas-table"><tbody>
-            <Row label="Nasolabial angle (Cm–Sn–Ls)"     val={report.skel.nasolabial} norm="90–110°"          unit="°"/>
-            <Row label="Upper lip to E-plane (Ricketts)"  val={report.skel.upperE}     norm="−4 mm (Caucasian)"/>
-            <Row label="Lower lip to E-plane (Ricketts)"  val={report.skel.lowerE}     norm="−2 mm (Caucasian)"/>
-            <Row label="Pog' to Sn vertical"              val={report.skel.pogSn}      norm="≈ 0 mm (Class I)"/>
+            <Row label="Facial convexity (Gl–Sn–Pog)"     val={report.skel.convexity} norm="165–175°"         unit="°"/>
+            <Row label="Nasolabial angle (Cm–Sn–Ls)"      val={report.skel.nasolabial} norm="90–110°"         unit="°"/>
+            <Row label="Upper lip to E-plane"              val={report.skel.upperE}    norm={`${report.eNorm?.upper??-4} mm`}/>
+            <Row label="Lower lip to E-plane"              val={report.skel.lowerE}    norm={`${report.eNorm?.lower??-2} mm`}/>
+            <Row label="Pog' to Sn vertical"               val={report.skel.pogSn}     norm="≈ 0 mm (Class I)"/>
           </tbody></table>
           <div className="note-box">⚠ Soft-tissue estimate only. Confirm with lateral cephalogram.</div>
         </RCard>
         <RCard title="Lip Competence & Soft Tissue" flag={report.lip.flag}>
           <table className="meas-table"><tbody>
-            <Row label="Upper lip length (Sn→Sto)"   val={report.lip.ulLen}       norm="19–22mm (F) · 20–24mm (M)"/>
-            <Row label="Lower lip length (Sto→Me')"  val={report.lip.llLen}       norm="38–44 mm"/>
-            <Row label="Interlabial gap (rest)"       val={report.lip.gap}         norm="0–3 mm"/>
-            <Row label="Nasolabial angle"             val={report.lip.nasolabial}  norm="90–110°"  unit="°"/>
-            <Row label="Mentolabial fold"             val={report.lip.mentolabial} norm="120–135°" unit="°"/>
-            <Row label="Upper lip to E-plane"         val={report.lip.upperE}      norm="−4 mm"/>
-            <Row label="Lower lip to E-plane"         val={report.lip.lowerE}      norm="−2 mm"/>
+            <Row label="Upper lip length (Sn→Sto)"        val={report.lip.ulLen}        norm="19–22mm (F) · 20–24mm (M)"/>
+            <Row label="Lower lip length (Sto→Me')"       val={report.lip.llLen}        norm="38–44 mm"/>
+            <Row label="Interlabial gap (rest)"            val={report.lip.gap}          norm="0–3 mm"/>
+            <Row label="Nasolabial angle"                  val={report.lip.nasolabial}   norm="90–110°"  unit="°"/>
+            <Row label="Mentolabial fold"                  val={report.lip.mentolabial}  norm="120–135°" unit="°"/>
+            <Row label="Nose projection (Goode's ratio)"   val={report.lip.goodesRatio}  norm="0.55–0.60"/>
           </tbody></table>
-          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:6}}>Source: Arnett &amp; Bergman (1993)</p>
+          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:6}}>Sources: Arnett &amp; Bergman (1993) · Goode (1981)</p>
         </RCard>
         <RCard title="Smile Arc & Buccal Corridor" flag={report.smile.flag}>
           <div style={{marginBottom:10}}>
@@ -1326,7 +1385,7 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive}){
         <strong>Disclaimer:</strong> This analysis is intended to assist clinical assessment and does not replace
         the judgment of a qualified orthodontist. All measurements must be verified clinically before treatment planning.
         Calibration: outer canthi × 0.70 as IPD proxy (Farkas 1994, IPD {ipdMm} mm).
-        E-plane norms are Caucasian (Ricketts 1968).
+        E-plane norms apply the selected ethnicity set (Caucasian: Ricketts 1968; Arab: Bishara 1986).
       </div>
     </div>
   );
@@ -1444,7 +1503,7 @@ function ArchivePage({onViewPatient,onBack}){
                   <span style={{fontSize:11,color:'var(--gray-400)'}}>
                     Scale: {r.scale?`${r.scale.toFixed(3)} mm/px`:'uncal.'}
                   </span>
-                  <span style={{fontSize:11,color:'var(--blue)',fontWeight:600}}>View →</span>
+                  <span className="arc-arrow" style={{fontSize:11,color:'var(--blue)',fontWeight:600}}>View →</span>
                 </div>
               </div>
             );
@@ -1465,7 +1524,8 @@ function App(){
   const [report,setReport] = useState(null);
   const [error,setError]   = useState(null);
   const [pid,setPid]       = useState('P'+Date.now().toString().slice(-6));
-  const [ipdMm,setIpdMm]  = useState(63);
+  const [ipdMm,setIpdMm]      = useState(63);
+  const [ethnicity,setEthnicity] = useState('caucasian');
   const [archivePatient,setArchivePatient] = useState(null); // patient record viewed from archive
 
   function handleFile(pt){return file=>{
@@ -1490,7 +1550,7 @@ function App(){
       setStage('analysing');
       setTimeout(async()=>{
         try{
-          const r=doAnalyse(next,ipdMm);
+          const r=doAnalyse(next,ipdMm,ethnicity);
           // Generate compressed thumbnails for each photo
           const thumbs={};
           for(const k of PHOTO_KEYS){
@@ -1643,6 +1703,19 @@ function App(){
                     style={{border:'1.5px solid var(--gray-200)',borderRadius:8,padding:'6px 10px',fontSize:14,fontWeight:600,width:68,textAlign:'center',outline:'none'}}/>
                   <span style={{fontSize:11,color:'var(--gray-400)',lineHeight:1.4}}>Inter-pupillary distance<br/>used for mm calibration</span>
                 </div>
+              </div>
+            </div>
+            <div className="card" style={{display:'flex',alignItems:'center',gap:12,padding:'12px 18px',flex:'1 1 220px'}}>
+              <div style={{width:36,height:36,background:'#ede9fe',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>🌍</div>
+              <div style={{flex:1}}>
+                <label style={{fontSize:11,fontWeight:700,color:'var(--gray-400)',letterSpacing:'.05em',textTransform:'uppercase',display:'block',marginBottom:4}}>Norm Set</label>
+                <select value={ethnicity} onChange={e=>setEthnicity(e.target.value)}
+                  style={{border:'1.5px solid var(--gray-200)',borderRadius:8,padding:'6px 10px',fontSize:13,fontWeight:600,width:'100%',outline:'none',background:'white',cursor:'pointer'}}>
+                  <option value="caucasian">Caucasian</option>
+                  <option value="arab">Arab / Middle Eastern</option>
+                  <option value="asian">Asian</option>
+                  <option value="african">African</option>
+                </select>
               </div>
             </div>
           </div>
