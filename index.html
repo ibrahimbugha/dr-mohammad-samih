@@ -289,8 +289,36 @@ function loadArchive(){
 function saveToArchive(record){
   const arr=loadArchive();
   const idx=arr.findIndex(r=>r.pid===record.pid);
-  if(idx>=0) arr[idx]=record; else arr.unshift(record);
+  if(idx>=0){
+    const ex=arr[idx];
+    // snapshot the current latest visit into history before overwriting
+    const prevVisit={
+      visitLabel:ex.visitLabel||'Initial visit',
+      savedAt:ex.savedAt,
+      report:ex.report,
+      thumbnails:ex.thumbnails,
+      ipdMm:ex.ipdMm,
+      notes:ex.notes||'',
+    };
+    const visits=[...(ex.visits||[]),prevVisit]; // oldest first
+    arr[idx]={...record,visits};
+  }else{
+    arr.unshift({...record,visits:[]});
+  }
   localStorage.setItem(ARCHIVE_KEY,JSON.stringify(arr));
+}
+// Returns all visits for a patient as a chronological array (oldest→latest)
+function getAllVisits(patient){
+  const older=patient.visits||[];
+  const latest={
+    visitLabel:patient.visitLabel||(older.length===0?'Initial visit':`Visit ${older.length+1}`),
+    savedAt:patient.savedAt,
+    report:patient.report,
+    thumbnails:patient.thumbnails,
+    ipdMm:patient.ipdMm,
+    notes:patient.notes||'',
+  };
+  return[...older,latest];
 }
 function deleteFromArchive(pid){
   const arr=loadArchive().filter(r=>r.pid!==pid);
@@ -1260,7 +1288,7 @@ function RCard({title,flag,children,wide}){
   );
 }
 
-function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive}){
+function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,selectedVisitIdx}){
   const abnCount=(report.findings||[]).filter(f=>f.level==='abnormal').length;
   const borderCount=(report.findings||[]).filter(f=>f.level==='borderline').length;
   const normalCount=(report.findings||[]).filter(f=>f.level==='normal').length;
@@ -1301,6 +1329,51 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive}){
           return(<div key={i} className="kf-item"><span className="kf-icon">{icon}</span><span className={`kf-text ${f.level}`}>{f.text}</span></div>);
         })}
       </div>
+      {/* ── Progress comparison (only when multiple visits exist) ── */}
+      {allVisits&&allVisits.length>1&&(()=>{
+        const first=allVisits[0].report;
+        const last=allVisits[allVisits.length-1].report;
+        const cur=report;
+        const delta=(a,b)=>{if(a==null||b==null)return null;const d=Math.round((b-a)*10)/10;return d>0?`+${d}`:String(d);};
+        const rows=[
+          {label:'Skeletal class',  a:first?.skel?.cls,           b:cur?.skel?.cls,          unit:''},
+          {label:'Nasolabial angle',a:first?.skel?.nasolabial,    b:cur?.skel?.nasolabial,   unit:'°'},
+          {label:'Lower lip E-plane',a:first?.skel?.lowerE,       b:cur?.skel?.lowerE,       unit:' mm'},
+          {label:'Overjet',         a:first?.oj?.oj?.toFixed(1),  b:cur?.oj?.oj?.toFixed(1), unit:' mm'},
+          {label:'Overbite',        a:first?.oj?.ob?.toFixed(1),  b:cur?.oj?.ob?.toFixed(1), unit:' mm'},
+          {label:'Lower facial third',a:first?.thirds?.lowPct,    b:cur?.thirds?.lowPct,     unit:'%'},
+        ];
+        return(
+          <div style={{background:'linear-gradient(135deg,#0f172a,#1e3a5f)',borderRadius:14,padding:'18px 22px',marginBottom:18}}>
+            <p style={{fontSize:11,fontWeight:700,letterSpacing:'.07em',color:'rgba(255,255,255,.45)',textTransform:'uppercase',marginBottom:8}}>Treatment Progress — {allVisits[0].visitLabel||'T0'} → {allVisits[allVisits.length-1].visitLabel||`T${allVisits.length-1}`}</p>
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',fontSize:12,color:'#e2e8f0',borderCollapse:'collapse'}}>
+                <thead>
+                  <tr>
+                    <td style={{paddingBottom:6,color:'rgba(255,255,255,.4)',fontWeight:600}}>Measurement</td>
+                    <td style={{paddingBottom:6,color:'rgba(255,255,255,.4)',fontWeight:600,textAlign:'center'}}>{allVisits[0].visitLabel||'T0'}</td>
+                    <td style={{paddingBottom:6,color:'rgba(255,255,255,.4)',fontWeight:600,textAlign:'center'}}>{selectedVisitIdx!=null&&selectedVisitIdx<allVisits.length-1?allVisits[selectedVisitIdx].visitLabel:allVisits[allVisits.length-1].visitLabel||'Latest'}</td>
+                    <td style={{paddingBottom:6,color:'rgba(255,255,255,.4)',fontWeight:600,textAlign:'center'}}>Δ</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row,i)=>{
+                    const d=typeof row.a==='number'&&typeof row.b==='number'?delta(row.a,row.b):null;
+                    return(
+                      <tr key={i} style={{borderTop:'1px solid rgba(255,255,255,.07)'}}>
+                        <td style={{padding:'5px 0',color:'rgba(255,255,255,.7)'}}>{row.label}</td>
+                        <td style={{textAlign:'center',fontFamily:'monospace'}}>{row.a!=null?`${row.a}${row.unit}`:'—'}</td>
+                        <td style={{textAlign:'center',fontFamily:'monospace',fontWeight:700,color:row.b!==row.a?'#93c5fd':'rgba(255,255,255,.8)'}}>{row.b!=null?`${row.b}${row.unit}`:'—'}</td>
+                        <td style={{textAlign:'center',fontFamily:'monospace',color:d&&d.startsWith('+')?'#4ade80':d&&d.startsWith('-')?'#f87171':'rgba(255,255,255,.4)'}}>{d||'—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
       <div className="results-grid">
         <RCard title="Facial Symmetry" flag={report.sym.flag}>
           <table className="meas-table"><tbody>
@@ -1484,8 +1557,15 @@ function ArchivePage({onViewPatient,onBack}){
                     )}
                   </div>
                 )}
-                <div className="archive-pid">{p.pid}</div>
-                <div className="archive-ts">🕐 {r.ts||'—'}</div>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <div className="archive-pid">{p.pid}</div>
+                  {(p.visits?.length>0)&&(
+                    <span style={{background:'#dbeafe',color:'#1d4ed8',borderRadius:20,padding:'2px 8px',fontSize:11,fontWeight:700}}>
+                      📅 {p.visits.length+1} visits
+                    </span>
+                  )}
+                </div>
+                <div className="archive-ts">🕐 {r.ts||'—'} {p.visitLabel&&p.visits?.length>0?`· ${p.visitLabel}`:''}</div>
                 <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
                   <span style={{width:10,height:10,borderRadius:'50%',background:flagColor[of_],display:'inline-block',flexShrink:0}}/>
                   <span style={{fontSize:12,fontWeight:600,color:flagColor[of_]}}>{flagLabel[of_]}</span>
@@ -1527,9 +1607,11 @@ function App(){
   const [report,setReport] = useState(null);
   const [error,setError]   = useState(null);
   const [pid,setPid]       = useState('P'+Date.now().toString().slice(-6));
-  const [ipdMm,setIpdMm]        = useState(63);
-  const [ethnicity,setEthnicity] = useState('caucasian');
-  const [notes,setNotes]         = useState('');
+  const [ipdMm,setIpdMm]            = useState(63);
+  const [ethnicity,setEthnicity]     = useState('caucasian');
+  const [notes,setNotes]             = useState('');
+  const [visitLabel,setVisitLabel]   = useState('Initial visit');
+  const [selectedVisitIdx,setSelectedVisitIdx] = useState(null); // null = latest
   const [archivePatient,setArchivePatient] = useState(null); // patient record viewed from archive
 
   function handleFile(pt){return file=>{
@@ -1561,7 +1643,7 @@ function App(){
             if(previews[k]) thumbs[k]=await generateThumbnail(previews[k]);
           }
           const rec={
-            pid,ipdMm,notes,
+            pid,ipdMm,notes,visitLabel,
             report:{...r,pid},
             savedAt:new Date().toISOString(),
             thumbnails:thumbs,
@@ -1651,15 +1733,37 @@ function App(){
       )}
 
       {/* Archive patient detail */}
-      {showingArchiveDetail&&archivePatient&&(
-        <ReportView
-          report={archivePatient.report}
-          pid={archivePatient.pid}
-          ipdMm={archivePatient.ipdMm||63}
-          fromArchive={true}
-          onBack={()=>setStage('archive')}
-          onNewPatient={handleReset}/>
-      )}
+      {showingArchiveDetail&&archivePatient&&(()=>{
+        const allV=getAllVisits(archivePatient);
+        const selIdx=selectedVisitIdx!==null?Math.min(selectedVisitIdx,allV.length-1):allV.length-1;
+        const selVisit=allV[selIdx];
+        return(
+          <>
+            {allV.length>1&&(
+              <div style={{display:'flex',gap:6,flexWrap:'wrap',padding:'0 0 14px 0'}}>
+                {allV.map((v,i)=>(
+                  <button key={i} onClick={()=>setSelectedVisitIdx(i)}
+                    style={{padding:'5px 14px',borderRadius:20,fontSize:12,fontWeight:600,cursor:'pointer',
+                      border:i===selIdx?'2px solid var(--blue)':'1.5px solid var(--gray-200)',
+                      background:i===selIdx?'var(--blue)':'white',
+                      color:i===selIdx?'white':'var(--gray-600)'}}>
+                    {v.visitLabel||`Visit ${i+1}`}
+                  </button>
+                ))}
+              </div>
+            )}
+            <ReportView
+              report={selVisit.report}
+              pid={archivePatient.pid}
+              ipdMm={selVisit.ipdMm||63}
+              fromArchive={true}
+              allVisits={allV}
+              selectedVisitIdx={selIdx}
+              onBack={()=>{setStage('archive');setSelectedVisitIdx(null);}}
+              onNewPatient={handleReset}/>
+          </>
+        );
+      })()}
 
       {/* Upload */}
       {stage==='upload'&&(
@@ -1691,13 +1795,31 @@ function App(){
 
           {/* Patient info row */}
           <div style={{display:'flex',gap:14,flexWrap:'wrap',marginBottom:18}}>
-            <div className="card" style={{display:'flex',alignItems:'center',gap:12,padding:'12px 18px',flex:'1 1 220px'}}>
-              <div style={{width:36,height:36,background:'var(--blue-light)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>🪪</div>
-              <div style={{flex:1}}>
-                <label style={{fontSize:11,fontWeight:700,color:'var(--gray-400)',letterSpacing:'.05em',textTransform:'uppercase',display:'block',marginBottom:4}}>Patient ID</label>
-                <input className="pid-input" value={pid} onChange={e=>setPid(e.target.value)} placeholder="e.g. P001" style={{width:'100%',border:'1.5px solid var(--gray-200)',borderRadius:8,padding:'6px 10px',fontSize:14,fontWeight:600,outline:'none',fontFamily:'monospace'}}/>
+            {(()=>{
+              const existing=loadArchive().find(p=>p.pid===pid);
+              const allV=existing?getAllVisits(existing):[];
+              const nextNum=allV.length+1;
+              const isReturn=existing&&allV.length>0;
+              if(isReturn&&visitLabel==='Initial visit'){
+                // auto-suggest visit label
+                setTimeout(()=>setVisitLabel(`Visit ${nextNum}`),0);
+              }
+              return(
+              <div className="card" style={{display:'flex',alignItems:'center',gap:12,padding:'12px 18px',flex:'1 1 220px',outline:isReturn?'2px solid #3b82f6':undefined}}>
+                <div style={{width:36,height:36,background:isReturn?'#dbeafe':'var(--blue-light)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{isReturn?'🔁':'🪪'}</div>
+                <div style={{flex:1}}>
+                  <label style={{fontSize:11,fontWeight:700,color:isReturn?'var(--blue)':'var(--gray-400)',letterSpacing:'.05em',textTransform:'uppercase',display:'block',marginBottom:4}}>
+                    {isReturn?`Patient found · Visit ${nextNum}`:'Patient ID'}
+                  </label>
+                  <input className="pid-input" value={pid} onChange={e=>{setPid(e.target.value);setVisitLabel('Initial visit');}} placeholder="e.g. P001" style={{width:'100%',border:'1.5px solid var(--gray-200)',borderRadius:8,padding:'6px 10px',fontSize:14,fontWeight:600,outline:'none',fontFamily:'monospace'}}/>
+                  {isReturn&&(
+                    <input value={visitLabel} onChange={e=>setVisitLabel(e.target.value)} placeholder="Visit label…"
+                      style={{marginTop:5,width:'100%',border:'1.5px solid #93c5fd',borderRadius:7,padding:'4px 8px',fontSize:12,outline:'none',boxSizing:'border-box'}}/>
+                  )}
+                </div>
               </div>
-            </div>
+              );
+            })()}
             <div className="card" style={{display:'flex',alignItems:'center',gap:12,padding:'12px 18px',flex:'1 1 280px'}}>
               <div style={{width:36,height:36,background:'#fef9c3',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>📏</div>
               <div>
@@ -1773,18 +1895,24 @@ function App(){
       )}
 
       {/* Results */}
-      {stage==='results'&&report&&(
-        <ReportView report={report} pid={pid} ipdMm={ipdMm}
-          fromArchive={false}
-          onBack={()=>setStage('archive')}
-          onNewPatient={handleReset}/>
-      )}
+      {stage==='results'&&report&&(()=>{
+        const savedPat=loadArchive().find(p=>p.pid===pid);
+        const allV=savedPat?getAllVisits(savedPat):null;
+        return(
+          <ReportView report={report} pid={pid} ipdMm={ipdMm}
+            fromArchive={false}
+            allVisits={allV}
+            selectedVisitIdx={allV?allV.length-1:null}
+            onBack={()=>setStage('archive')}
+            onNewPatient={handleReset}/>
+        );
+      })()}
 
       {/* Branding */}
       <div className="branding">
         <div className="branding-inner">
-          <span className="branding-line1">Made with <span className="heart">♥</span> Dr. Mohammad Samih</span>
-          <span className="branding-line2">Programmed with <span className="heart">♥</span> by Ibrahim AlBugha</span>
+          <span className="branding-line1">Made with Dr. Mohammad Samih</span>
+          <span className="branding-line2">Programmed with Ibrahim AlBugha</span>
         </div>
       </div>
     </>
