@@ -786,8 +786,10 @@ function exportExcel(report,pid,ipdMm){
   rows.push({Measurement:'=== PATIENT INFO ===',Value:'',Normal_Range:''});
   row('Patient ID',pid);
   row('Analysis Date',report.ts);
+  row('Norm set',report.ethnicity||'caucasian');
   row('Calibration Scale',report.scale?`${report.scale.toFixed(3)} mm/px`:'uncalibrated');
   row('IPD used',ipdMm,'','mm');
+  if(report.notes) row('Clinical Notes',report.notes);
   rows.push({Measurement:'',Value:'',Normal_Range:''});
 
   rows.push({Measurement:'=== SYMMETRY ===',Value:'',Normal_Range:''});
@@ -1270,7 +1272,8 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive}){
           <div>
             <p style={{fontSize:11,color:'rgba(255,255,255,.45)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginBottom:6}}>Clinical Analysis Report</p>
             <h1 style={{fontSize:24,fontWeight:800,color:'#fff',letterSpacing:'-.02em',fontFamily:'monospace'}}>{pid}</h1>
-            <p style={{fontSize:12,color:'rgba(255,255,255,.45)',marginTop:5}}>{report.ts} · {report.scale?`Scale: ${report.scale.toFixed(3)} mm/px`:'Uncalibrated'} · IPD: {ipdMm} mm</p>
+            <p style={{fontSize:12,color:'rgba(255,255,255,.45)',marginTop:5}}>{report.ts} · {report.scale?`Scale: ${report.scale.toFixed(3)} mm/px`:'Uncalibrated'} · IPD: {ipdMm} mm · <span style={{textTransform:'capitalize'}}>{report.ethnicity||'caucasian'} norms</span></p>
+            {report.notes&&<p style={{fontSize:12,color:'rgba(255,255,255,.65)',marginTop:6,background:'rgba(255,255,255,.07)',borderRadius:8,padding:'6px 10px',lineHeight:1.5,whiteSpace:'pre-wrap'}}>📝 {report.notes}</p>}
             <div style={{display:'flex',gap:10,marginTop:12}}>
               {abnCount>0&&<span style={{background:'rgba(239,68,68,.2)',border:'1px solid rgba(239,68,68,.4)',borderRadius:20,padding:'3px 11px',fontSize:11,color:'#fca5a5',fontWeight:600}}>🔴 {abnCount} Abnormal</span>}
               {borderCount>0&&<span style={{background:'rgba(245,158,11,.15)',border:'1px solid rgba(245,158,11,.35)',borderRadius:20,padding:'3px 11px',fontSize:11,color:'#fcd34d',fontWeight:600}}>⚠️ {borderCount} Borderline</span>}
@@ -1524,8 +1527,9 @@ function App(){
   const [report,setReport] = useState(null);
   const [error,setError]   = useState(null);
   const [pid,setPid]       = useState('P'+Date.now().toString().slice(-6));
-  const [ipdMm,setIpdMm]      = useState(63);
+  const [ipdMm,setIpdMm]        = useState(63);
   const [ethnicity,setEthnicity] = useState('caucasian');
+  const [notes,setNotes]         = useState('');
   const [archivePatient,setArchivePatient] = useState(null); // patient record viewed from archive
 
   function handleFile(pt){return file=>{
@@ -1550,14 +1554,14 @@ function App(){
       setStage('analysing');
       setTimeout(async()=>{
         try{
-          const r=doAnalyse(next,ipdMm,ethnicity);
+          const r=doAnalyse(next,ipdMm,ethnicity,notes);
           // Generate compressed thumbnails for each photo
           const thumbs={};
           for(const k of PHOTO_KEYS){
             if(previews[k]) thumbs[k]=await generateThumbnail(previews[k]);
           }
           const rec={
-            pid,ipdMm,
+            pid,ipdMm,notes,
             report:{...r,pid},
             savedAt:new Date().toISOString(),
             thumbnails:thumbs,
@@ -1718,6 +1722,13 @@ function App(){
                 </select>
               </div>
             </div>
+          </div>
+
+          {/* Clinical notes */}
+          <div className="card" style={{padding:'12px 18px',marginBottom:14}}>
+            <label style={{fontSize:11,fontWeight:700,color:'var(--gray-400)',letterSpacing:'.05em',textTransform:'uppercase',display:'block',marginBottom:6}}>📝 Clinical Notes (optional)</label>
+            <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2} placeholder="Chief complaint, diagnosis, treatment plan notes…"
+              style={{width:'100%',border:'1.5px solid var(--gray-200)',borderRadius:8,padding:'7px 10px',fontSize:13,outline:'none',resize:'vertical',fontFamily:'inherit',lineHeight:1.5,boxSizing:'border-box'}}/>
           </div>
 
           {/* Upload slots */}
