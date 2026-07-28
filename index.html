@@ -703,51 +703,6 @@ async function detectAndRefine(imgEl, photoType, onStatus){
         const noseRow=skinFR?maxRErow:maxLErow;
         const noseTipX=(skinFR?rEdge[noseRow]:lEdge[noseRow])*ratio;
         const noseTipY=noseRow*ratio;
-        // ── Improved tragus: luminance silhouette → head-width ratio ───────────
-        // Problem with old approach: maxLErow/maxRErow can land on the forehead,
-        // and skin-only scan misses dark hair (underestimates head width by 20%).
-        // New approach:
-        //   1. Luminance scan (threshold 22) finds full head including dark hair
-        //   2. Scan from back side at nose-tip height ± 22% of face height
-        //   3. Place tragus at 43% of head-width from back-of-skull toward nose
-        //      (cephalometric ratio — ear canal is ~midpoint, tragus just anterior)
-        const earZT=Math.max(0,noseRow-Math.round((fB-fT)*0.22));
-        const earZB=Math.min(SH-1,noseRow+Math.round((fB-fT)*0.22));
-        let bestBackX=-1,bestBackY=noseRow,bestBackProt=0;
-        for(let y=earZT;y<=earZB;y++){
-          if(skinFR){
-            // face-right → back is left → scan left→right for first non-bg pixel
-            for(let x=0;x<SW;x++){
-              const i=(y*SW+x)*4;
-              if((pd[i]+pd[i+1]+pd[i+2])/3>22){
-                const prot=faceMidX-x;
-                if(prot>bestBackProt){bestBackProt=prot;bestBackX=x;bestBackY=y;}
-                break;
-              }
-            }
-          }else{
-            // face-left → back is right → scan right→left
-            for(let x=SW-1;x>=0;x--){
-              const i=(y*SW+x)*4;
-              if((pd[i]+pd[i+1]+pd[i+2])/3>22){
-                const prot=x-faceMidX;
-                if(prot>bestBackProt){bestBackProt=prot;bestBackX=x;bestBackY=y;}
-                break;
-              }
-            }
-          }
-        }
-        const noseXsi=skinFR?rEdge[noseRow]:lEdge[noseRow];
-        const headWidthSi=bestBackX>=0?Math.abs(noseXsi-bestBackX):0;
-        let earEdgeX=-1,earEdgeY=noseTipY,earHeightOK=false,earSideOK=false;
-        if(headWidthSi>SW*0.12){
-          // Tragus ≈ 43% of head-width from back of skull toward nose
-          const tx=skinFR?(bestBackX+headWidthSi*0.43)*ratio:(bestBackX-headWidthSi*0.43)*ratio;
-          const ty=bestBackY*ratio;
-          earEdgeX=tx; earEdgeY=ty;
-          earHeightOK=Math.abs(ty-noseTipY)<fHpx*0.40;
-          earSideOK=skinFR?tx<noseTipX:tx>noseTipX;
-        }
         // ── Menton detection for nose-to-chin estimate ─────────────────────
         const noseXVal=skinFR?rEdge[noseRow]:lEdge[noseRow];
         const protrusion=Math.abs(noseXVal-faceMidX);
@@ -761,11 +716,29 @@ async function detectAndRefine(imgEl, photoType, onStatus){
         const noseToChinRaw=(mentonRow-noseRow)*ratio;
         const faceH_skin=(noseToChinRaw>=fHpx*0.18&&noseToChinRaw<=fHpx*0.65)
           ? noseToChinRaw : fHpx*0.62;
-        // Build proportional landmarks, then override tragus with direct detection
+        // Build proportional landmarks first (68% confidence anchor)
         const skinResult=profileFromAnchor(noseTipX,noseTipY,faceH_skin,skinFR?1:-1,W,H,defs);
         onStatus?.('Skin-tone anchor profile placement');
-        if(earEdgeX>0&&earEdgeX<W&&earHeightOK&&earSideOK){
-          return skinResult.map(lm=>lm.id==='T'?{...lm,x:earEdgeX,y:earEdgeY,confidence:.68}:lm);
+        // ── Tragus override: anatomy-based positioning ──────────────────────
+        // Previous attempts:
+        //   • maxLErow skin edge → T "inside face" (back-side skin edge is neck,
+        //     not the ear pinna; tragus ends up too far anterior)
+        //   • Luminance silhouette (threshold 22) → T in hair (brownish background
+        //     fools the threshold — background lum ≈ 30-50 overlaps dark hair)
+        // New approach: derive position analytically from known landmarks.
+        //   Y: ear zone ≈ 55% of face bounding box height (fT to fB) from fT.
+        //      This is independent of noseRow (which can be contaminated by bg).
+        //   X: nose-tip minus 62% of estimated total face height, laterally.
+        //      Standard ratio is 0.46 but that under-estimates skull depth in
+        //      children (skull proportionally wider vs face). 0.62 fits better
+        //      for the pediatric patients in this app.
+        const totFH_sk=faceH_skin/0.48; // total face height estimate (nose-to-chin / 0.48)
+        const earTY=(fT+(fB-fT)*0.55)*ratio;   // Y: ear ≈ 55% down face bounding box
+        const earTX=noseTipX-(skinFR?1:-1)*totFH_sk*0.62; // X: 62% of totFH back from nose
+        const earValid=earTX>0&&earTX<W&&earTY>0&&earTY<H
+          &&(skinFR?earTX<noseTipX:earTX>noseTipX); // must be on the correct side
+        if(earValid){
+          return skinResult.map(lm=>lm.id==='T'?{...lm,x:earTX,y:earTY,confidence:.68}:lm);
         }
         return skinResult;
       }
