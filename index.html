@@ -699,30 +699,41 @@ async function detectAndRefine(imgEl, photoType, onStatus){
           if(le>maxLE){maxLE=le; maxLErow=y;}
         }
         const skinFR=maxRE>maxLE; // right protrudes more → face right
-        // Nose tip = actual protrusion point (row+col), more accurate than fixed %
+        // Nose tip = maximum anterior protrusion point
         const noseRow=skinFR?maxRErow:maxLErow;
         const noseTipX=(skinFR?rEdge[noseRow]:lEdge[noseRow])*ratio;
         const noseTipY=noseRow*ratio;
-        // ── Better face-height estimate ─────────────────────────────────────
-        // The skin region misses dark hair (~20-25% of total face height above the
-        // detected skin start). fHpx ≈ 80% of totFH, so totFH ≈ fHpx / 0.80.
-        // ALSO detect the menton row directly: lowest row where the nose-side edge
-        // stays close to the nose x (below that the neck recedes).
+        // ── Direct tragus detection ─────────────────────────────────────────
+        // For dark-haired patients, hair covers the back/top of head so the
+        // OPPOSITE-side skin protrusion IS the ear (not the back of the skull).
+        // This is far more accurate than the fixed 0.46*totFH proportion which
+        // fails for children whose skulls are proportionally wider than adults.
+        const earRow=skinFR?maxLErow:maxRErow;
+        const earEdgeX=(skinFR?lEdge[earRow]:rEdge[earRow])*ratio;
+        const earEdgeY=earRow*ratio;
+        // Sanity: ear should be near nose height and on the correct side
+        const earHeightOK=Math.abs(earEdgeY-noseTipY)<fHpx*0.35;
+        const earSideOK=skinFR?(earEdgeX<noseTipX):(earEdgeX>noseTipX);
+        // ── Menton detection for nose-to-chin estimate ─────────────────────
         const noseXVal=skinFR?rEdge[noseRow]:lEdge[noseRow];
         const protrusion=Math.abs(noseXVal-faceMidX);
         let mentonRow=noseRow;
-        for(let y=noseRow+1;y<=Math.min(scanB,SH-1);y++){
+        const scanBext=Math.round(fT+(fB-fT)*0.90); // extend to 90% to catch chin
+        for(let y=noseRow+1;y<=Math.min(scanBext,SH-1);y++){
           if(rEdge[y]<0||rowSk[y]<SW*0.02) continue;
           const edgeX=skinFR?rEdge[y]:lEdge[y];
-          if(skinFR?edgeX>=faceMidX+protrusion*0.25:edgeX<=faceMidX-protrusion*0.25) mentonRow=y;
+          if(skinFR?edgeX>=faceMidX+protrusion*0.20:edgeX<=faceMidX-protrusion*0.20) mentonRow=y;
         }
         const noseToChinRaw=(mentonRow-noseRow)*ratio;
-        // Use menton detection if it's anatomically plausible (18-65% of skin height)
         const faceH_skin=(noseToChinRaw>=fHpx*0.18&&noseToChinRaw<=fHpx*0.65)
-          ? noseToChinRaw
-          : fHpx*0.62; // corrected fallback: 0.62 ≈ 0.48*(1/0.78) for hair offset
+          ? noseToChinRaw : fHpx*0.62;
+        // Build proportional landmarks, then override tragus with direct detection
+        const skinResult=profileFromAnchor(noseTipX,noseTipY,faceH_skin,skinFR?1:-1,W,H,defs);
         onStatus?.('Skin-tone anchor profile placement');
-        return profileFromAnchor(noseTipX,noseTipY,faceH_skin,skinFR?1:-1,W,H,defs);
+        if(earEdgeX>0&&earEdgeX<W&&earHeightOK&&earSideOK){
+          return skinResult.map(lm=>lm.id==='T'?{...lm,x:earEdgeX,y:earEdgeY,confidence:.62}:lm);
+        }
+        return skinResult;
       }
     }catch(esk){console.warn('Skin detection error:',esk);}
 
