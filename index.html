@@ -573,7 +573,6 @@ async function detectAndRefine(imgEl, photoType, onStatus){
             return mapped.map(lm=>({...defMap[lm.id],x:lm.x,y:lm.y,confidence:lm.c}));
           }
           // mapMPtoLms returned null (implausible faceH) — but we have nose tip from MediaPipe
-          // Use it as an anchor for proportional placement (much better than image-proportion defaults)
           const prnX=lms[4].x*W, prnY=lms[4].y*H;
           const meY=lms[152].y*H;
           const detFH=meY-prnY;
@@ -581,9 +580,85 @@ async function detectAndRefine(imgEl, photoType, onStatus){
           onStatus?.('Anchor-based profile placement (nose tip anchor)');
           return profileFromAnchor(prnX,prnY,estFH,faceRight?1:-1,W,H,defs);
         }
+
+        // ── No face found — Strategy 1: Horizontal flip + retry ─────────────
+        onStatus?.('Retrying with mirrored image…');
+        try{
+          const fc=document.createElement('canvas');
+          fc.width=W; fc.height=H;
+          const fctx=fc.getContext('2d');
+          fctx.translate(W,0); fctx.scale(-1,1);
+          fctx.drawImage(imgEl,0,0);
+          const res2=_faceLP.detect(fc);
+          if(res2.faceLandmarks?.length>0){
+            const rawLms=res2.faceLandmarks[0];
+            // Mirror x coords back so landmarks map to the original (un-flipped) image
+            const lms2=rawLms.map(lm=>({...lm,x:1-lm.x}));
+            const mapped2=mapMPtoLms(lms2,W,H,'profile');
+            if(mapped2){
+              const defMap=Object.fromEntries(defs.map(d=>[d.id,d]));
+              onStatus?.('Profile landmarks detected (mirror-flip)');
+              return mapped2.map(lm=>({...defMap[lm.id],x:lm.x,y:lm.y,confidence:lm.c}));
+            }
+            // Use flipped-detection nose as anchor (mirror x back to original coords)
+            const prnX2=(1-rawLms[4].x)*W, prnY2=rawLms[4].y*H;
+            const meY2=rawLms[152].y*H;
+            const detFH2=meY2-prnY2;
+            const estFH2=detFH2>H*0.05?detFH2:H*0.42;
+            // In flipped image nose-left means face-right in original, nose-right means face-left
+            const flipFR=rawLms[4].x<0.5;
+            onStatus?.('Profile anchor placement (mirror-flip)');
+            return profileFromAnchor(prnX2,prnY2,estFH2,flipFR?1:-1,W,H,defs);
+          }
+        }catch(ef){console.warn('Flip retry error:',ef);}
       }catch(e){console.warn('Profile detect error:',e);}
     }
-    // No detection at all — use default (face-left = right-profile, common in clinics)
+
+    // ── Strategy 2: Skin-tone pixel detection ────────────────────────────────
+    onStatus?.('Scanning for face via skin-tone detection…');
+    try{
+      const sc=document.createElement('canvas');
+      const SW=Math.min(W,320), SH=Math.round(H*(SW/W));
+      sc.width=SW; sc.height=SH;
+      const sctx2=sc.getContext('2d');
+      sctx2.drawImage(imgEl,0,0,SW,SH);
+      const pd=sctx2.getImageData(0,0,SW,SH).data;
+      const isSkin=(r,g,b)=>{
+        const mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+        // Kovac skin rule + lighter-skin variant
+        return (r>95&&g>40&&b>20&&mx-mn>15&&Math.abs(r-g)>15&&r>g&&r>b)||
+               (r>220&&g>210&&b>170&&Math.abs(r-g)<=15&&r>b&&g>b);
+      };
+      const colSk=new Float32Array(SW), rowSk=new Float32Array(SH);
+      for(let y=0;y<SH;y++)
+        for(let x=0;x<SW;x++){const i=(y*SW+x)*4;if(isSkin(pd[i],pd[i+1],pd[i+2])){colSk[x]++;rowSk[y]++;}}
+      // Smooth to suppress noise
+      const smooth3=(arr)=>{const o=new Float32Array(arr.length);for(let i=0;i<arr.length;i++){let s=0,c=0;for(let j=Math.max(0,i-3);j<=Math.min(arr.length-1,i+3);j++){s+=arr[j];c++;}o[i]=s/c;}return o;};
+      const cSm=smooth3(colSk), rSm=smooth3(rowSk);
+      let fL=-1,fR=-1,fT=-1,fB=-1;
+      for(let x=0;x<SW;x++)if(cSm[x]>SH*0.06){if(fL<0)fL=x;fR=x;}
+      for(let y=0;y<SH;y++)if(rSm[y]>SW*0.06){if(fT<0)fT=y;fB=y;}
+      if(fL>=0&&fR>fL&&fT>=0&&fB>fT){
+        const ratio=W/SW;
+        const fHpx=(fB-fT)*ratio; // face region height in original image pixels
+        // Face direction: more skin mass on right half → face points right
+        let lSum=0,rSum=0;
+        for(let x=0;x<SW;x++){if(x<SW/2)lSum+=cSm[x];else rSum+=cSm[x];}
+        const skinFR=rSum>lSum*1.15; // 15% bias threshold to reduce false positives
+        // Nose col: extreme anterior column, nudged inward 2% for noise robustness
+        const span=fR-fL;
+        const noseCol=skinFR ? Math.max(fL, fR-Math.round(span*0.02))
+                              : Math.min(fR, fL+Math.round(span*0.02));
+        const noseTipX=noseCol*ratio;
+        // Nose Y: ~33% from top of skin region (upper third of face)
+        const noseTipY=fT*ratio+fHpx*0.33;
+        // faceH param = nose-to-menton ≈ 48% of total face height
+        onStatus?.('Skin-tone anchor profile placement');
+        return profileFromAnchor(noseTipX,noseTipY,fHpx*0.48,skinFR?1:-1,W,H,defs);
+      }
+    }catch(esk){console.warn('Skin detection error:',esk);}
+
+    // ── Final fallback: direction-aware image proportions ─────────────────────
     onStatus?.('Profile defaults — adjust direction with Flip ↔ if needed');
     return profileFallback(faceRight);
   }
