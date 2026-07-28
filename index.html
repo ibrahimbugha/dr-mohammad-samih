@@ -850,8 +850,17 @@ function analyseSkeletal(profile,sc){
   }
   // pog.x-sn.x: positive=anterior for face-right, negative=anterior for face-left → multiply by fdir.
   if(pog&&sn&&sc)pogSn=r1(fdir*(pog.x-sn.x)*sc);
+  // Skeletal class: primarily from convexity angle (Gl-Sn-Pog), confirmed by pogSn.
+  // E-plane is a lip-protrusion measure, NOT a class indicator.
   let cls='Class I';
-  if(lowerE!==null){if(lowerE>1)cls='Class III tendency';else if(lowerE<-4)cls='Class II tendency';}
+  if(convexity!==null){
+    if(convexity<163) cls='Class II tendency';
+    else if(convexity>177) cls='Class III tendency';
+  }
+  if(cls==='Class I'&&pogSn!==null){
+    if(pogSn>2) cls='Class III tendency';
+    else if(pogSn<-5) cls='Class II tendency';
+  }
   return{cls,nasolabial,convexity,upperE,lowerE,pogSn};
 }
 function analyseLip(profile,sc){
@@ -1525,8 +1534,11 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
       <div className="print-hero" style={{background:'linear-gradient(135deg,#0f172a,#1e3a5f)',borderRadius:16,padding:'24px 28px',marginBottom:22,boxShadow:'0 6px 24px rgba(15,23,42,.3)'}}>
         <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:14}}>
           <div>
-            <p style={{fontSize:11,color:'rgba(255,255,255,.45)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginBottom:6}}>{T.reportTitle}</p>
-            <h1 style={{fontSize:24,fontWeight:800,color:'#fff',letterSpacing:'-.02em',fontFamily:'monospace'}}>{pid}{report.patientName?<span style={{fontSize:16,fontWeight:500,color:'rgba(255,255,255,.7)',fontFamily:'Inter,sans-serif',letterSpacing:'normal',marginLeft:10}}>· {report.patientName}</span>:null}</h1>
+            <p style={{fontSize:11,color:'rgba(255,255,255,.45)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginBottom:4}}>{T.reportTitle}</p>
+            {report.patientName
+              ?<><h1 style={{fontSize:28,fontWeight:800,color:'#fff',letterSpacing:'-.02em',fontFamily:'Inter,sans-serif',marginBottom:2}}>{report.patientName}</h1><span style={{fontSize:12,fontWeight:600,color:'rgba(255,255,255,.45)',fontFamily:'monospace',letterSpacing:'.06em'}}>{pid}</span></>
+              :<h1 style={{fontSize:24,fontWeight:800,color:'#fff',letterSpacing:'-.02em',fontFamily:'monospace'}}>{pid}</h1>
+            }
             <p style={{fontSize:12,color:'rgba(255,255,255,.45)',marginTop:5}}>{report.ts} · {report.scale?`Scale: ${report.scale.toFixed(3)} mm/px`:'Uncalibrated'} · IPD: {ipdMm} mm · <span style={{textTransform:'capitalize'}}>{report.ethnicity||'caucasian'} norms</span>{report.phone?<span style={{marginLeft:8}}>· 📞 {report.phone}</span>:null}</p>
             {report.notes&&<p className="print-hero-notes" style={{fontSize:12,color:'rgba(255,255,255,.65)',marginTop:6,background:'rgba(255,255,255,.07)',borderRadius:8,padding:'6px 10px',lineHeight:1.5,whiteSpace:'pre-wrap'}}>📝 {report.notes}</p>}
             <div style={{display:'flex',gap:10,marginTop:12}}>
