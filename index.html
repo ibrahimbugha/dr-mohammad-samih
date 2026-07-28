@@ -1873,6 +1873,8 @@ function App(){
   const [visitLabel,setVisitLabel]   = useState('Initial visit');
   const [selectedVisitIdx,setSelectedVisitIdx] = useState(null); // null = latest
   const [archivePatient,setArchivePatient] = useState(null); // patient record viewed from archive
+  const [nameSuggestions,setNameSuggestions] = useState([]); // autocomplete suggestions for patient name
+  const [showNameSugg,setShowNameSugg] = useState(false);
 
   function handleFile(pt){return file=>{
     const url=URL.createObjectURL(file);
@@ -2073,9 +2075,50 @@ function App(){
                   <label style={{fontSize:11,fontWeight:700,color:isReturn?'var(--blue)':'var(--gray-400)',letterSpacing:'.05em',textTransform:'uppercase',display:'block',marginBottom:4}}>
                     {isReturn?`Patient found · Visit ${nextNum}`:'Patient ID'}
                   </label>
-                  <input className="pid-input" value={pid} onChange={e=>{setPid(e.target.value);setVisitLabel('Initial visit');setPatientName('');}} placeholder="e.g. P001" style={{width:'100%',border:'1.5px solid var(--gray-200)',borderRadius:8,padding:'6px 10px',fontSize:14,fontWeight:600,outline:'none',fontFamily:'monospace'}}/>
-                  <input value={patientName} onChange={e=>setPatientName(e.target.value)} placeholder="Patient name (optional)"
-                    style={{marginTop:5,width:'100%',border:'1.5px solid var(--gray-200)',borderRadius:7,padding:'4px 8px',fontSize:12,outline:'none',boxSizing:'border-box',fontFamily:'inherit'}}/>
+                  <input className="pid-input" value={pid} onChange={e=>{setPid(e.target.value);setVisitLabel('Initial visit');setPatientName('');setNameSuggestions([]);setShowNameSugg(false);}} placeholder="e.g. P001" style={{width:'100%',border:'1.5px solid var(--gray-200)',borderRadius:8,padding:'6px 10px',fontSize:14,fontWeight:600,outline:'none',fontFamily:'monospace'}}/>
+                  <div style={{position:'relative',marginTop:5}}>
+                    <input value={patientName}
+                      onChange={e=>{
+                        const v=e.target.value;
+                        setPatientName(v);
+                        if(v.trim().length>=1){
+                          const q=v.trim().toLowerCase();
+                          const matches=loadArchive().filter(p=>(p.patientName||'').toLowerCase().includes(q)&&p.patientName).slice(0,5);
+                          setNameSuggestions(matches);
+                          setShowNameSugg(matches.length>0);
+                        }else{setNameSuggestions([]);setShowNameSugg(false);}
+                      }}
+                      onBlur={()=>setTimeout(()=>setShowNameSugg(false),150)}
+                      onFocus={()=>{if(nameSuggestions.length>0)setShowNameSugg(true);}}
+                      placeholder="Patient name (optional)"
+                      style={{width:'100%',border:'1.5px solid var(--gray-200)',borderRadius:7,padding:'4px 8px',fontSize:12,outline:'none',boxSizing:'border-box',fontFamily:'inherit'}}/>
+                    {showNameSugg&&(
+                      <div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:999,background:'white',border:'1.5px solid #93c5fd',borderRadius:8,boxShadow:'0 4px 16px rgba(59,130,246,.15)',marginTop:2,overflow:'hidden'}}>
+                        {nameSuggestions.map((p,i)=>{
+                          const allV=getAllVisits(p);
+                          return(
+                            <div key={p.pid+i}
+                              onMouseDown={()=>{
+                                setPatientName(p.patientName||'');
+                                setPid(p.pid);
+                                setShowNameSugg(false);
+                                const nextN=allV.length+1;
+                                setVisitLabel(`Visit ${nextN}`);
+                              }}
+                              style={{padding:'7px 10px',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12,borderBottom:i<nameSuggestions.length-1?'1px solid #e0e7ff':undefined}}
+                              onMouseEnter={e=>e.currentTarget.style.background='#eff6ff'}
+                              onMouseLeave={e=>e.currentTarget.style.background='white'}>
+                              <div>
+                                <span style={{fontWeight:700,color:'#1e40af'}}>{p.patientName}</span>
+                                <span style={{color:'var(--gray-400)',marginLeft:6,fontFamily:'monospace',fontSize:11}}>{p.pid}</span>
+                              </div>
+                              <span style={{background:'#dbeafe',color:'#1d4ed8',borderRadius:10,padding:'1px 7px',fontSize:10,fontWeight:600,whiteSpace:'nowrap'}}>{allV.length} visit{allV.length!==1?'s':''}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                   {isReturn&&(
                     <input value={visitLabel} onChange={e=>setVisitLabel(e.target.value)} placeholder="Visit label…"
                       style={{marginTop:4,width:'100%',border:'1.5px solid #93c5fd',borderRadius:7,padding:'4px 8px',fontSize:12,outline:'none',boxSizing:'border-box'}}/>
