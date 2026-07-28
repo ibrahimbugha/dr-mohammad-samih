@@ -630,29 +630,46 @@ async function detectAndRefine(imgEl, photoType, onStatus){
                (r>220&&g>210&&b>170&&Math.abs(r-g)<=15&&r>b&&g>b);
       };
       const colSk=new Float32Array(SW), rowSk=new Float32Array(SH);
+      // Per-row left/right skin edges for silhouette protrusion analysis
+      const lEdge=new Float32Array(SH).fill(SW), rEdge=new Float32Array(SH).fill(-1);
       for(let y=0;y<SH;y++)
-        for(let x=0;x<SW;x++){const i=(y*SW+x)*4;if(isSkin(pd[i],pd[i+1],pd[i+2])){colSk[x]++;rowSk[y]++;}}
-      // Smooth to suppress noise
+        for(let x=0;x<SW;x++){
+          const i=(y*SW+x)*4;
+          if(isSkin(pd[i],pd[i+1],pd[i+2])){
+            colSk[x]++; rowSk[y]++;
+            if(x<lEdge[y])lEdge[y]=x;
+            if(x>rEdge[y])rEdge[y]=x;
+          }
+        }
+      // Smooth column sums to suppress noise
       const smooth3=(arr)=>{const o=new Float32Array(arr.length);for(let i=0;i<arr.length;i++){let s=0,c=0;for(let j=Math.max(0,i-3);j<=Math.min(arr.length-1,i+3);j++){s+=arr[j];c++;}o[i]=s/c;}return o;};
-      const cSm=smooth3(colSk), rSm=smooth3(rowSk);
+      const cSm=smooth3(colSk);
       let fL=-1,fR=-1,fT=-1,fB=-1;
       for(let x=0;x<SW;x++)if(cSm[x]>SH*0.06){if(fL<0)fL=x;fR=x;}
-      for(let y=0;y<SH;y++)if(rSm[y]>SW*0.06){if(fT<0)fT=y;fB=y;}
+      for(let y=0;y<SH;y++)if(rowSk[y]>SW*0.06){if(fT<0)fT=y;fB=y;}
       if(fL>=0&&fR>fL&&fT>=0&&fB>fT){
         const ratio=W/SW;
-        const fHpx=(fB-fT)*ratio; // face region height in original image pixels
-        // Face direction: more skin mass on right half → face points right
-        let lSum=0,rSum=0;
-        for(let x=0;x<SW;x++){if(x<SW/2)lSum+=cSm[x];else rSum+=cSm[x];}
-        const skinFR=rSum>lSum*1.15; // 15% bias threshold to reduce false positives
-        // Nose col: extreme anterior column, nudged inward 2% for noise robustness
-        const span=fR-fL;
-        const noseCol=skinFR ? Math.max(fL, fR-Math.round(span*0.02))
-                              : Math.min(fR, fL+Math.round(span*0.02));
-        const noseTipX=noseCol*ratio;
-        // Nose Y: ~33% from top of skin region (upper third of face)
-        const noseTipY=fT*ratio+fHpx*0.33;
-        // faceH param = nose-to-menton ≈ 48% of total face height
+        const fHpx=(fB-fT)*ratio;
+        // ── Direction via SILHOUETTE PROTRUSION (anatomically robust) ──────
+        // Skin mass comparison fails because cheek/forehead have more surface area
+        // than the narrow nose tip. Instead, find which SIDE extends furthest
+        // from the face's own horizontal midpoint — that's the nose side.
+        const faceMidX=(fL+fR)/2;
+        const scanT=Math.round(fT+(fB-fT)*0.12); // skip top 12% (hair)
+        const scanB=Math.round(fT+(fB-fT)*0.80); // skip bottom 20% (neck/shirt)
+        let maxRE=0, maxRErow=Math.round((fT+fB)/2);
+        let maxLE=0, maxLErow=Math.round((fT+fB)/2);
+        for(let y=scanT;y<=Math.min(scanB,SH-1);y++){
+          if(rEdge[y]<0||rowSk[y]<SW*0.02) continue;
+          const re=rEdge[y]-faceMidX, le=faceMidX-lEdge[y];
+          if(re>maxRE){maxRE=re; maxRErow=y;}
+          if(le>maxLE){maxLE=le; maxLErow=y;}
+        }
+        const skinFR=maxRE>maxLE; // right protrudes more → face right
+        // Nose tip = actual protrusion point (row+col), more accurate than fixed %
+        const noseRow=skinFR?maxRErow:maxLErow;
+        const noseTipX=(skinFR?rEdge[noseRow]:lEdge[noseRow])*ratio;
+        const noseTipY=noseRow*ratio;
         onStatus?.('Skin-tone anchor profile placement');
         return profileFromAnchor(noseTipX,noseTipY,fHpx*0.48,skinFR?1:-1,W,H,defs);
       }
