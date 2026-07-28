@@ -1875,6 +1875,8 @@ function App(){
   const [archivePatient,setArchivePatient] = useState(null); // patient record viewed from archive
   const [nameSuggestions,setNameSuggestions] = useState([]); // autocomplete suggestions for patient name
   const [showNameSugg,setShowNameSugg] = useState(false);
+  const [pidSuggestions,setPidSuggestions] = useState([]); // autocomplete suggestions for patient ID
+  const [showPidSugg,setShowPidSugg] = useState(false);
 
   function handleFile(pt){return file=>{
     const url=URL.createObjectURL(file);
@@ -2075,7 +2077,50 @@ function App(){
                   <label style={{fontSize:11,fontWeight:700,color:isReturn?'var(--blue)':'var(--gray-400)',letterSpacing:'.05em',textTransform:'uppercase',display:'block',marginBottom:4}}>
                     {isReturn?`Patient found · Visit ${nextNum}`:'Patient ID'}
                   </label>
-                  <input className="pid-input" value={pid} onChange={e=>{setPid(e.target.value);setVisitLabel('Initial visit');setPatientName('');setNameSuggestions([]);setShowNameSugg(false);}} placeholder="e.g. P001" style={{width:'100%',border:'1.5px solid var(--gray-200)',borderRadius:8,padding:'6px 10px',fontSize:14,fontWeight:600,outline:'none',fontFamily:'monospace'}}/>
+                  <div style={{position:'relative'}}>
+                    <input className="pid-input" value={pid}
+                      onChange={e=>{
+                        const v=e.target.value;
+                        setPid(v);setVisitLabel('Initial visit');setPatientName('');setNameSuggestions([]);setShowNameSugg(false);
+                        if(v.trim().length>=1){
+                          const q=v.trim().toLowerCase();
+                          const matches=loadArchive().filter(p=>p.pid.toLowerCase().includes(q)).slice(0,5);
+                          setPidSuggestions(matches);
+                          setShowPidSugg(matches.length>0);
+                        }else{setPidSuggestions([]);setShowPidSugg(false);}
+                      }}
+                      onBlur={()=>setTimeout(()=>setShowPidSugg(false),150)}
+                      onFocus={()=>{if(pidSuggestions.length>0)setShowPidSugg(true);}}
+                      placeholder="e.g. P001"
+                      style={{width:'100%',border:'1.5px solid var(--gray-200)',borderRadius:8,padding:'6px 10px',fontSize:14,fontWeight:600,outline:'none',fontFamily:'monospace'}}/>
+                    {showPidSugg&&(
+                      <div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:999,background:'white',border:'1.5px solid #93c5fd',borderRadius:8,boxShadow:'0 4px 16px rgba(59,130,246,.15)',marginTop:2,overflow:'hidden'}}>
+                        {pidSuggestions.map((p,i)=>{
+                          const allV=getAllVisits(p);
+                          return(
+                            <div key={p.pid+i}
+                              onMouseDown={()=>{
+                                setPid(p.pid);
+                                setPatientName(p.patientName||'');
+                                setPidSuggestions([]);setShowPidSugg(false);
+                                setNameSuggestions([]);setShowNameSugg(false);
+                                const nextN=allV.length+1;
+                                setVisitLabel(`Visit ${nextN}`);
+                              }}
+                              style={{padding:'7px 10px',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12,borderBottom:i<pidSuggestions.length-1?'1px solid #e0e7ff':undefined}}
+                              onMouseEnter={e=>e.currentTarget.style.background='#eff6ff'}
+                              onMouseLeave={e=>e.currentTarget.style.background='white'}>
+                              <div>
+                                <span style={{fontWeight:700,color:'#1e40af',fontFamily:'monospace'}}>{p.pid}</span>
+                                {p.patientName&&<span style={{color:'var(--gray-500)',marginLeft:6,fontSize:11}}>{p.patientName}</span>}
+                              </div>
+                              <span style={{background:'#dbeafe',color:'#1d4ed8',borderRadius:10,padding:'1px 7px',fontSize:10,fontWeight:600,whiteSpace:'nowrap'}}>{allV.length} visit{allV.length!==1?'s':''}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                   <div style={{position:'relative',marginTop:5}}>
                     <input value={patientName}
                       onChange={e=>{
