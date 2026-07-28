@@ -611,6 +611,39 @@ async function detectAndRefine(imgEl, photoType, onStatus){
             return profileFromAnchor(prnX2,prnY2,estFH2,flipFR?1:-1,W,H,defs);
           }
         }catch(ef){console.warn('Flip retry error:',ef);}
+
+        // ── Strategy 1.5: Contrast-boost detection (dark/low-contrast photos) ─
+        // Many profile photos fail MediaPipe because of underexposure or dark bg.
+        // Boosting contrast+brightness often makes the face detectable.
+        onStatus?.('Trying contrast-enhanced detection…');
+        try{
+          const mkBoost=(doFlip)=>{
+            const c=document.createElement('canvas');c.width=W;c.height=H;
+            const ctx=c.getContext('2d');
+            if(doFlip){ctx.translate(W,0);ctx.scale(-1,1);}
+            ctx.filter='contrast(200%) brightness(150%)';
+            ctx.drawImage(imgEl,0,0);
+            return c;
+          };
+          for(const doFlip of[false,true]){
+            const bc=mkBoost(doFlip);
+            const br=_faceLP.detect(bc);
+            if(!br.faceLandmarks?.length) continue;
+            const rawB=br.faceLandmarks[0];
+            const lmsB=doFlip?rawB.map(lm=>({...lm,x:1-lm.x})):rawB;
+            const mappedB=mapMPtoLms(lmsB,W,H,'profile');
+            if(mappedB){
+              const defMap=Object.fromEntries(defs.map(d=>[d.id,d]));
+              onStatus?.(`Profile landmarks (contrast-boost${doFlip?'+flip':''})`);
+              return mappedB.map(lm=>({...defMap[lm.id],x:lm.x,y:lm.y,confidence:lm.c}));
+            }
+            const prnXB=lmsB[4].x*W, prnYB=lmsB[4].y*H;
+            const meYB=rawB[152].y*H;
+            const fhB=meYB-prnYB;
+            onStatus?.(`Profile anchor (contrast-boost${doFlip?'+flip':''})`);
+            return profileFromAnchor(prnXB,prnYB,fhB>H*0.05?fhB:H*0.42,lmsB[4].x>0.5?1:-1,W,H,defs);
+          }
+        }catch(ecb){console.warn('Contrast boost error:',ecb);}
       }catch(e){console.warn('Profile detect error:',e);}
     }
 
@@ -670,8 +703,26 @@ async function detectAndRefine(imgEl, photoType, onStatus){
         const noseRow=skinFR?maxRErow:maxLErow;
         const noseTipX=(skinFR?rEdge[noseRow]:lEdge[noseRow])*ratio;
         const noseTipY=noseRow*ratio;
+        // ── Better face-height estimate ─────────────────────────────────────
+        // The skin region misses dark hair (~20-25% of total face height above the
+        // detected skin start). fHpx ≈ 80% of totFH, so totFH ≈ fHpx / 0.80.
+        // ALSO detect the menton row directly: lowest row where the nose-side edge
+        // stays close to the nose x (below that the neck recedes).
+        const noseXVal=skinFR?rEdge[noseRow]:lEdge[noseRow];
+        const protrusion=Math.abs(noseXVal-faceMidX);
+        let mentonRow=noseRow;
+        for(let y=noseRow+1;y<=Math.min(scanB,SH-1);y++){
+          if(rEdge[y]<0||rowSk[y]<SW*0.02) continue;
+          const edgeX=skinFR?rEdge[y]:lEdge[y];
+          if(skinFR?edgeX>=faceMidX+protrusion*0.25:edgeX<=faceMidX-protrusion*0.25) mentonRow=y;
+        }
+        const noseToChinRaw=(mentonRow-noseRow)*ratio;
+        // Use menton detection if it's anatomically plausible (18-65% of skin height)
+        const faceH_skin=(noseToChinRaw>=fHpx*0.18&&noseToChinRaw<=fHpx*0.65)
+          ? noseToChinRaw
+          : fHpx*0.62; // corrected fallback: 0.62 ≈ 0.48*(1/0.78) for hair offset
         onStatus?.('Skin-tone anchor profile placement');
-        return profileFromAnchor(noseTipX,noseTipY,fHpx*0.48,skinFR?1:-1,W,H,defs);
+        return profileFromAnchor(noseTipX,noseTipY,faceH_skin,skinFR?1:-1,W,H,defs);
       }
     }catch(esk){console.warn('Skin detection error:',esk);}
 
