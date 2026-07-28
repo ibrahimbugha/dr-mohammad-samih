@@ -703,17 +703,51 @@ async function detectAndRefine(imgEl, photoType, onStatus){
         const noseRow=skinFR?maxRErow:maxLErow;
         const noseTipX=(skinFR?rEdge[noseRow]:lEdge[noseRow])*ratio;
         const noseTipY=noseRow*ratio;
-        // ── Direct tragus detection ─────────────────────────────────────────
-        // For dark-haired patients, hair covers the back/top of head so the
-        // OPPOSITE-side skin protrusion IS the ear (not the back of the skull).
-        // This is far more accurate than the fixed 0.46*totFH proportion which
-        // fails for children whose skulls are proportionally wider than adults.
-        const earRow=skinFR?maxLErow:maxRErow;
-        const earEdgeX=(skinFR?lEdge[earRow]:rEdge[earRow])*ratio;
-        const earEdgeY=earRow*ratio;
-        // Sanity: ear should be near nose height and on the correct side
-        const earHeightOK=Math.abs(earEdgeY-noseTipY)<fHpx*0.35;
-        const earSideOK=skinFR?(earEdgeX<noseTipX):(earEdgeX>noseTipX);
+        // ── Improved tragus: luminance silhouette → head-width ratio ───────────
+        // Problem with old approach: maxLErow/maxRErow can land on the forehead,
+        // and skin-only scan misses dark hair (underestimates head width by 20%).
+        // New approach:
+        //   1. Luminance scan (threshold 22) finds full head including dark hair
+        //   2. Scan from back side at nose-tip height ± 22% of face height
+        //   3. Place tragus at 43% of head-width from back-of-skull toward nose
+        //      (cephalometric ratio — ear canal is ~midpoint, tragus just anterior)
+        const earZT=Math.max(0,noseRow-Math.round((fB-fT)*0.22));
+        const earZB=Math.min(SH-1,noseRow+Math.round((fB-fT)*0.22));
+        let bestBackX=-1,bestBackY=noseRow,bestBackProt=0;
+        for(let y=earZT;y<=earZB;y++){
+          if(skinFR){
+            // face-right → back is left → scan left→right for first non-bg pixel
+            for(let x=0;x<SW;x++){
+              const i=(y*SW+x)*4;
+              if((pd[i]+pd[i+1]+pd[i+2])/3>22){
+                const prot=faceMidX-x;
+                if(prot>bestBackProt){bestBackProt=prot;bestBackX=x;bestBackY=y;}
+                break;
+              }
+            }
+          }else{
+            // face-left → back is right → scan right→left
+            for(let x=SW-1;x>=0;x--){
+              const i=(y*SW+x)*4;
+              if((pd[i]+pd[i+1]+pd[i+2])/3>22){
+                const prot=x-faceMidX;
+                if(prot>bestBackProt){bestBackProt=prot;bestBackX=x;bestBackY=y;}
+                break;
+              }
+            }
+          }
+        }
+        const noseXsi=skinFR?rEdge[noseRow]:lEdge[noseRow];
+        const headWidthSi=bestBackX>=0?Math.abs(noseXsi-bestBackX):0;
+        let earEdgeX=-1,earEdgeY=noseTipY,earHeightOK=false,earSideOK=false;
+        if(headWidthSi>SW*0.12){
+          // Tragus ≈ 43% of head-width from back of skull toward nose
+          const tx=skinFR?(bestBackX+headWidthSi*0.43)*ratio:(bestBackX-headWidthSi*0.43)*ratio;
+          const ty=bestBackY*ratio;
+          earEdgeX=tx; earEdgeY=ty;
+          earHeightOK=Math.abs(ty-noseTipY)<fHpx*0.40;
+          earSideOK=skinFR?tx<noseTipX:tx>noseTipX;
+        }
         // ── Menton detection for nose-to-chin estimate ─────────────────────
         const noseXVal=skinFR?rEdge[noseRow]:lEdge[noseRow];
         const protrusion=Math.abs(noseXVal-faceMidX);
@@ -731,7 +765,7 @@ async function detectAndRefine(imgEl, photoType, onStatus){
         const skinResult=profileFromAnchor(noseTipX,noseTipY,faceH_skin,skinFR?1:-1,W,H,defs);
         onStatus?.('Skin-tone anchor profile placement');
         if(earEdgeX>0&&earEdgeX<W&&earHeightOK&&earSideOK){
-          return skinResult.map(lm=>lm.id==='T'?{...lm,x:earEdgeX,y:earEdgeY,confidence:.62}:lm);
+          return skinResult.map(lm=>lm.id==='T'?{...lm,x:earEdgeX,y:earEdgeY,confidence:.68}:lm);
         }
         return skinResult;
       }
