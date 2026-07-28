@@ -756,50 +756,48 @@ function doAnalyse(confirmed,ipdMm,ethnicity='caucasian',notes=''){
   const eNorms={caucasian:{upper:-4,lower:-2},arab:{upper:-2,lower:0},asian:{upper:-4,lower:-2},african:{upper:-2,lower:1}};
   const eNorm=eNorms[ethnicity]||eNorms.caucasian;
   const findings=[];
-  const add=(text,level)=>findings.push({text,level});
-  if(sym.flag==='abnormal') add(`Facial asymmetry: chin deviation ${sym.chinDev} mm (threshold 2 mm).`,'abnormal');
-  else if(sym.flag==='borderline') add(`Mild facial asymmetry noted.`,'borderline');
-  else if(sym.flag==='within_normal_limits') add(`Facial symmetry: within normal limits.`,'normal');
-  if(thirds.flag!=='within_normal_limits') add(`Facial thirds imbalance: middle ${thirds.midPct}%, lower ${thirds.lowPct}% (ideal 33.3%).`,thirds.flag);
-  else add(`Facial thirds: balanced (≈33% each).`,'normal');
-  // Facial convexity
+  const add=(en,ar,level)=>findings.push({text:en,arText:ar,level});
+  const arCls={'Class I':'الصنف الأول','Class II tendency':'ميل للصنف الثاني','Class III tendency':'ميل للصنف الثالث'};
+  const arEth={'caucasian':'القوقازيين','arab':'العرب','asian':'الآسيويين','african':'الأفارقة'};
+  const arOJ={'increased':'مرتفع','severely_increased':'مرتفع جداً','reverse':'عكسي','edge_to_edge':'حافة لحافة'};
+  const arOB={'increased':'مرتفع','severely_increased':'مرتفع جداً','open_bite':'عضة مفتوحة','edge_to_edge':'حافة لحافة'};
+  if(sym.flag==='abnormal') add(`Facial asymmetry: chin deviation ${sym.chinDev} mm (threshold 2 mm).`,`عدم تماثل وجهي: انحراف الذقن ${sym.chinDev} مم (الحد 2 مم).`,'abnormal');
+  else if(sym.flag==='borderline') add(`Mild facial asymmetry noted.`,`لوحظ عدم تماثل وجهي خفيف.`,'borderline');
+  else if(sym.flag==='within_normal_limits') add(`Facial symmetry: within normal limits.`,`تماثل الوجه: ضمن الحدود الطبيعية.`,'normal');
+  if(thirds.flag!=='within_normal_limits') add(`Facial thirds imbalance: middle ${thirds.midPct}%, lower ${thirds.lowPct}% (ideal 33.3%).`,`عدم توازن أثلاث الوجه: الثلث الأوسط ${thirds.midPct}%، السفلي ${thirds.lowPct}% (المثالي 33.3%).`,thirds.flag);
+  else add(`Facial thirds: balanced (≈33% each).`,`أثلاث الوجه: متوازنة (≈33% لكل ثلث).`,'normal');
   if(skel.convexity!==null){
-    if(skel.convexity<165) add(`Convex facial profile: ${skel.convexity}° (norm 165–175°) — Class II skeletal tendency.`,skel.convexity<158?'abnormal':'borderline');
-    else if(skel.convexity>175) add(`Concave facial profile: ${skel.convexity}° (norm 165–175°) — Class III skeletal tendency.`,skel.convexity>182?'abnormal':'borderline');
-    else add(`Facial convexity: ${skel.convexity}° — straight profile within normal limits.`,'normal');
+    if(skel.convexity<165) add(`Convex facial profile: ${skel.convexity}° (norm 165–175°) — Class II skeletal tendency.`,`ملف وجه محدب: ${skel.convexity}° (الطبيعي 165–175°) — ميل للصنف الثاني.`,skel.convexity<158?'abnormal':'borderline');
+    else if(skel.convexity>175) add(`Concave facial profile: ${skel.convexity}° (norm 165–175°) — Class III skeletal tendency.`,`ملف وجه مقعر: ${skel.convexity}° (الطبيعي 165–175°) — ميل للصنف الثالث.`,skel.convexity>182?'abnormal':'borderline');
+    else add(`Facial convexity: ${skel.convexity}° — straight profile within normal limits.`,`تحدب الوجه: ${skel.convexity}° — ملف مستقيم ضمن الحدود الطبيعية.`,'normal');
   }
-  if(skel.cls) add(`Soft-tissue skeletal estimate: ${skel.cls}.`,skel.cls==='Class I'?'normal':skel.cls.includes('III')?'abnormal':'borderline');
-  if(lip.gap!==null&&lip.gap>3) add(`Lip incompetence: interlabial gap ${lip.gap} mm at rest (norm 0–3 mm).`,lip.gap>5?'abnormal':'borderline');
-  else if(lip.flag==='within_normal_limits') add(`Lip competence: within normal limits.`,'normal');
-  if(smile.arc==='flat'||smile.arc==='reverse') add(`Smile arc: ${smile.arc} (consonant preferred).`,smile.arc==='reverse'?'abnormal':'borderline');
-  else if(smile.arc==='consonant') add(`Smile arc: consonant (aesthetic ideal).`,'normal');
-  if(mid.flag!=='within_normal_limits') add(`Dental midline: UDM ${mid.udmDev??'—'} mm from facial midline.`,mid.flag);
-  if(oj.ojCls!=='normal'&&oj.ojCls!=='not_measured') add(`Overjet estimate: ${oj.oj} mm — ${oj.ojCls.replace(/_/g,' ')}.`,oj.ojCls.includes('severe')?'abnormal':'borderline');
-  if(oj.obCls!=='normal'&&oj.obCls!=='not_measured') add(`Overbite estimate: ${oj.ob} mm — ${oj.obCls.replace(/_/g,' ')}.`,['open_bite','severely_increased'].includes(oj.obCls)?'abnormal':'borderline');
-  // Nasolabial angle
+  if(skel.cls) add(`Soft-tissue skeletal estimate: ${skel.cls}.`,`التقدير الهيكلي: ${arCls[skel.cls]||skel.cls}.`,skel.cls==='Class I'?'normal':skel.cls.includes('III')?'abnormal':'borderline');
+  if(lip.gap!==null&&lip.gap>3) add(`Lip incompetence: interlabial gap ${lip.gap} mm at rest (norm 0–3 mm).`,`عدم كفاءة الشفاه: الفجوة ${lip.gap} مم عند الراحة (الطبيعي 0–3 مم).`,lip.gap>5?'abnormal':'borderline');
+  else if(lip.flag==='within_normal_limits') add(`Lip competence: within normal limits.`,`كفاءة الشفاه: ضمن الحدود الطبيعية.`,'normal');
+  if(smile.arc==='flat'||smile.arc==='reverse') add(`Smile arc: ${smile.arc} (consonant preferred).`,`قوس الابتسامة: ${smile.arc==='flat'?'مسطح':'معكوس'} (المتناسق أفضل).`,smile.arc==='reverse'?'abnormal':'borderline');
+  else if(smile.arc==='consonant') add(`Smile arc: consonant (aesthetic ideal).`,`قوس الابتسامة: متناسق (المثالي الجمالي).`,'normal');
+  if(mid.flag!=='within_normal_limits') add(`Dental midline: UDM ${mid.udmDev??'—'} mm from facial midline.`,`خط وسط الأسنان: انحراف ${mid.udmDev??'—'} مم عن خط وسط الوجه.`,mid.flag);
+  if(oj.ojCls!=='normal'&&oj.ojCls!=='not_measured') add(`Overjet estimate: ${oj.oj} mm — ${oj.ojCls.replace(/_/g,' ')}.`,`تقدير الإطباق الأفقي: ${oj.oj} مم — ${arOJ[oj.ojCls]||oj.ojCls}.`,oj.ojCls.includes('severe')?'abnormal':'borderline');
+  if(oj.obCls!=='normal'&&oj.obCls!=='not_measured') add(`Overbite estimate: ${oj.ob} mm — ${oj.obCls.replace(/_/g,' ')}.`,`تقدير الإطباق الرأسي: ${oj.ob} مم — ${arOB[oj.obCls]||oj.obCls}.`,['open_bite','severely_increased'].includes(oj.obCls)?'abnormal':'borderline');
   if(skel.nasolabial!==null&&(skel.nasolabial<90||skel.nasolabial>110)){
     const acute=skel.nasolabial<90;
-    add(`${acute?'Acute':'Obtuse'} nasolabial angle: ${skel.nasolabial}° (norm 90–110°) — ${acute?'over-projected or depressed tip':'retrusive upper lip or over-rotated tip'}.`,skel.nasolabial<85||skel.nasolabial>120?'abnormal':'borderline');
+    add(`${acute?'Acute':'Obtuse'} nasolabial angle: ${skel.nasolabial}° (norm 90–110°) — ${acute?'over-projected or depressed tip':'retrusive upper lip or over-rotated tip'}.`,`الزاوية الأنفية الشفوية ${acute?'حادة':'منفرجة'}: ${skel.nasolabial}° (الطبيعي 90–110°) — ${acute?'بروز مفرط أو تدلي الطرف':'تراجع الشفة العليا أو دوران مفرط'}.`,skel.nasolabial<85||skel.nasolabial>120?'abnormal':'borderline');
   }
-  // E-plane (ethnicity-adjusted norms)
   if(skel.lowerE!==null&&(skel.lowerE>eNorm.lower+2||skel.lowerE<eNorm.lower-6)){
     const protruded=skel.lowerE>eNorm.lower;
-    add(`Lower lip ${protruded?'protrusion':'retrusion'}: ${skel.lowerE} mm vs E-plane (${ethnicity} norm ${eNorm.lower>0?'+':''}${eNorm.lower} mm).`,skel.lowerE>eNorm.lower+4||skel.lowerE<eNorm.lower-8?'abnormal':'borderline');
+    add(`Lower lip ${protruded?'protrusion':'retrusion'}: ${skel.lowerE} mm vs E-plane (${ethnicity} norm ${eNorm.lower>0?'+':''}${eNorm.lower} mm).`,`الشفة السفلى ${protruded?'بارزة':'راجعة'}: ${skel.lowerE} مم نسبة للمستوى E (معيار ${arEth[ethnicity]||ethnicity} ${eNorm.lower>0?'+':''}${eNorm.lower} مم).`,skel.lowerE>eNorm.lower+4||skel.lowerE<eNorm.lower-8?'abnormal':'borderline');
   }
-  // Mentolabial fold
   if(lip.mentolabial!==null&&(lip.mentolabial<120||lip.mentolabial>135)){
     const acute=lip.mentolabial<120;
-    add(`${acute?'Acute':'Obtuse'} mentolabial fold: ${lip.mentolabial}° (norm 120–135°) — ${acute?'prominent chin or deep fold':'retruded chin'}.`,'borderline');
+    add(`${acute?'Acute':'Obtuse'} mentolabial fold: ${lip.mentolabial}° (norm 120–135°) — ${acute?'prominent chin or deep fold':'retruded chin'}.`,`ثنية الذقن الشفوية ${acute?'حادة':'منفرجة'}: ${lip.mentolabial}° (الطبيعي 120–135°) — ${acute?'ذقن بارز أو ثنية عميقة':'ذقن راجع'}.`,'borderline');
   }
-  // Goode's ratio
   if(lip.goodesRatio!==null&&(lip.goodesRatio<0.55||lip.goodesRatio>0.60)){
-    add(`Nose projection (Goode's ratio): ${lip.goodesRatio} (norm 0.55–0.60) — ${lip.goodesRatio<0.55?'under-projected':'over-projected'} nose.`,'borderline');
+    add(`Nose projection (Goode's ratio): ${lip.goodesRatio} (norm 0.55–0.60) — ${lip.goodesRatio<0.55?'under-projected':'over-projected'} nose.`,`بروز الأنف (نسبة Goode): ${lip.goodesRatio} (الطبيعي 0.55–0.60) — أنف ${lip.goodesRatio<0.55?'ناقص البروز':'مفرط البروز'}.`,'borderline');
   }
-  // Upper lip length
   if(lip.ulLen!==null&&(lip.ulLen<19||lip.ulLen>24)){
-    add(`Upper lip length: ${lip.ulLen} mm (norm 19–24 mm) — ${lip.ulLen<19?'short upper lip':'long upper lip'}.`,'borderline');
+    add(`Upper lip length: ${lip.ulLen} mm (norm 19–24 mm) — ${lip.ulLen<19?'short upper lip':'long upper lip'}.`,`طول الشفة العليا: ${lip.ulLen} مم (الطبيعي 19–24 مم) — شفة ${lip.ulLen<19?'قصيرة':'طويلة'}.`,'borderline');
   }
-  if(!findings.length) add('All assessed parameters are within normal limits.','normal');
+  if(!findings.length) add('All assessed parameters are within normal limits.','جميع المعاملات المُقيَّمة ضمن الحدود الطبيعية.','normal');
   return{sym,thirds,skel,lip,smile,mid,oj,findings,scale:sc,ts:new Date().toLocaleString(),ethnicity,eNorm,notes};
 }
 
@@ -1289,17 +1287,75 @@ function RCard({title,flag,children,wide}){
   );
 }
 
+const TR={
+  en:{
+    reportTitle:'Clinical Analysis Report',keyFindings:'Key Findings',
+    symmetry:'Facial Symmetry',thirds:'Facial Thirds',skeletal:'Skeletal Class Estimate',
+    lip:'Lip Competence & Soft Tissue',smile:'Smile Arc & Buccal Corridor',
+    midline:'Dental Midline',ojOb:'Overjet & Overbite Estimate',progress:'Treatment Progress',
+    softTissueEst:'Soft-tissue estimate',normsLabel:'norms',
+    chinDev:'Chin deviation from midline',noseDev:'Nasal tip deviation',
+    alarAsym:'Alar base asymmetry',mouthAsym:'Mouth corner asymmetry',canthAsym:'Canthus asymmetry',
+    upThird:'Upper third (Tr→Gl)',midThird:'Middle third (Gl→Sn)',lowThird:"Lower third (Sn→Me')",
+    thirdsNote:'Ideal 33.3% each · Farkas (1994)',
+    convexity:'Facial convexity (Gl–Sn–Pog)',nasolabialSkel:'Nasolabial angle (Cm–Sn–Ls)',
+    upperEPlane:'Upper lip to E-plane',lowerEPlane:'Lower lip to E-plane',pogSn:"Pog' to Sn vertical",
+    skelNote:'⚠ Soft-tissue estimate only. Confirm with lateral cephalogram.',
+    ulLen:'Upper lip length (Sn→Sto)',llLen:"Lower lip length (Sto→Me')",
+    gap:'Interlabial gap (rest)',nasolabialLip:'Nasolabial angle',
+    mentolabial:'Mentolabial fold',goodesRatio:"Nose projection (Goode's ratio)",
+    smileArc:'Smile arc',bcLeft:'Buccal corridor — left',bcRight:'Buccal corridor — right',
+    arcNote:'Consonant = aesthetic ideal · Sarver & Ackerman (2001)',
+    udmDev:'Upper dental midline deviation',midlineNote:'From facial midline (Gl) · Peck & Peck (1995)',
+    overjet:'Overjet',overbite:'Overbite',
+    ojNote:'⚠ Photographic estimate — confirm with clinical measurement and radiographs.',
+    normalLbl:'Normal',borderlineLbl:'Borderline',abnormalLbl:'Abnormal',noDataLbl:'No data',
+    measurement:'Measurement',
+    disclaimer:'This analysis is intended to assist clinical assessment and does not replace the judgment of a qualified orthodontist. All measurements must be verified clinically before treatment planning.',
+    eNormNote:'E-plane norms apply the selected ethnicity set (Caucasian: Ricketts 1968; Arab: Bishara 1986).',
+  },
+  ar:{
+    reportTitle:'تقرير التحليل السريري',keyFindings:'النتائج الرئيسية',
+    symmetry:'تماثل الوجه',thirds:'أثلاث الوجه',skeletal:'تقدير النوع الهيكلي',
+    lip:'كفاءة الشفاه والأنسجة الرخوة',smile:'قوس الابتسامة وممر الخد',
+    midline:'خط وسط الأسنان',ojOb:'تقدير الإطباق الأفقي والرأسي',progress:'تقدم العلاج',
+    softTissueEst:'تقدير النسيج الرخو',normsLabel:'معايير',
+    chinDev:'انحراف الذقن عن خط الوسط',noseDev:'انحراف طرف الأنف',
+    alarAsym:'عدم تماثل قاعدة الأنف',mouthAsym:'عدم تماثل زوايا الفم',canthAsym:'عدم تماثل زاوية العين',
+    upThird:'الثلث العلوي (Tr→Gl)',midThird:'الثلث الأوسط (Gl→Sn)',lowThird:"الثلث السفلي (Sn→Me')",
+    thirdsNote:'المثالي 33.3% لكل ثلث · Farkas (1994)',
+    convexity:'تحدب الوجه (Gl–Sn–Pog)',nasolabialSkel:'الزاوية الأنفية الشفوية (Cm–Sn–Ls)',
+    upperEPlane:'الشفة العليا نسبة للمستوى E',lowerEPlane:'الشفة السفلى نسبة للمستوى E',pogSn:'نقطة الذقن للخط الرأسي',
+    skelNote:'⚠ تقدير نسيج رخو فقط. يُؤكد بالتصوير السيفالومتري الجانبي.',
+    ulLen:'طول الشفة العليا (Sn→Sto)',llLen:"طول الشفة السفلى (Sto→Me')",
+    gap:'الفجوة بين الشفاه (الراحة)',nasolabialLip:'الزاوية الأنفية الشفوية',
+    mentolabial:'ثنية الذقن الشفوية',goodesRatio:'بروز الأنف (نسبة Goode)',
+    smileArc:'قوس الابتسامة',bcLeft:'ممر الخد – أيسر',bcRight:'ممر الخد – أيمن',
+    arcNote:'المتناسق = المثالي الجمالي · Sarver & Ackerman (2001)',
+    udmDev:'انحراف خط وسط الأسنان العلوية',midlineNote:'من خط وسط الوجه (Gl) · Peck & Peck (1995)',
+    overjet:'الإطباق الأفقي',overbite:'الإطباق الرأسي',
+    ojNote:'⚠ تقدير من الصور — يُؤكد بالفحص السريري والأشعة.',
+    normalLbl:'طبيعي',borderlineLbl:'حدّي',abnormalLbl:'شاذ',noDataLbl:'لا بيانات',
+    measurement:'القياس',
+    disclaimer:'هذا التحليل مساعد للتقييم السريري ولا يحل محل حكم طبيب التقويم المؤهل. يجب التحقق من جميع القياسات سريرياً قبل وضع خطة العلاج.',
+    eNormNote:'معايير المستوى E تتبع مجموعة المعايير المختارة (القوقازيون: Ricketts 1968؛ العرب: Bishara 1986).',
+  }
+};
 function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,selectedVisitIdx}){
+  const [lang,setLang]=React.useState('en');
+  const T=TR[lang]||TR.en;
+  const isAr=lang==='ar';
+  const flagLabel={within_normal_limits:T.normalLbl,borderline:T.borderlineLbl,abnormal:T.abnormalLbl,missing_data:T.noDataLbl};
   const abnCount=(report.findings||[]).filter(f=>f.level==='abnormal').length;
   const borderCount=(report.findings||[]).filter(f=>f.level==='borderline').length;
   const normalCount=(report.findings||[]).filter(f=>f.level==='normal').length;
   return(
-    <div className="main">
+    <div className="main" dir={isAr?'rtl':'ltr'} style={isAr?{fontFamily:'Segoe UI,Tahoma,Arial,sans-serif'}:{}}>
       {/* Report hero */}
       <div style={{background:'linear-gradient(135deg,#0f172a,#1e3a5f)',borderRadius:16,padding:'24px 28px',marginBottom:22,boxShadow:'0 6px 24px rgba(15,23,42,.3)'}}>
         <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:14}}>
           <div>
-            <p style={{fontSize:11,color:'rgba(255,255,255,.45)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginBottom:6}}>Clinical Analysis Report</p>
+            <p style={{fontSize:11,color:'rgba(255,255,255,.45)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginBottom:6}}>{T.reportTitle}</p>
             <h1 style={{fontSize:24,fontWeight:800,color:'#fff',letterSpacing:'-.02em',fontFamily:'monospace'}}>{pid}{report.patientName?<span style={{fontSize:16,fontWeight:500,color:'rgba(255,255,255,.7)',fontFamily:'Inter,sans-serif',letterSpacing:'normal',marginLeft:10}}>· {report.patientName}</span>:null}</h1>
             <p style={{fontSize:12,color:'rgba(255,255,255,.45)',marginTop:5}}>{report.ts} · {report.scale?`Scale: ${report.scale.toFixed(3)} mm/px`:'Uncalibrated'} · IPD: {ipdMm} mm · <span style={{textTransform:'capitalize'}}>{report.ethnicity||'caucasian'} norms</span></p>
             {report.notes&&<p style={{fontSize:12,color:'rgba(255,255,255,.65)',marginTop:6,background:'rgba(255,255,255,.07)',borderRadius:8,padding:'6px 10px',lineHeight:1.5,whiteSpace:'pre-wrap'}}>📝 {report.notes}</p>}
@@ -1310,11 +1366,21 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
             </div>
           </div>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}} className="no-print">
-            <button className="btn btn-pdf" onClick={()=>window.print()}>📄 Export PDF</button>
-            <button className="btn btn-xlsx" onClick={()=>exportExcel(report,pid,ipdMm)}>📊 Export Excel</button>
+            <div style={{display:'flex',borderRadius:8,overflow:'hidden',border:'1.5px solid rgba(255,255,255,.25)'}}>
+              {['en','ar'].map(l=>(
+                <button key={l} onClick={()=>setLang(l)}
+                  style={{padding:'6px 14px',fontSize:12,fontWeight:700,cursor:'pointer',border:'none',
+                    background:lang===l?'rgba(255,255,255,.9)':'transparent',
+                    color:lang===l?'#0f172a':'rgba(255,255,255,.7)'}}>
+                  {l==='en'?'EN':'ع'}
+                </button>
+              ))}
+            </div>
+            <button className="btn btn-pdf" onClick={()=>window.print()}>📄 {isAr?'طباعة PDF':'Export PDF'}</button>
+            <button className="btn btn-xlsx" onClick={()=>exportExcel(report,pid,ipdMm)}>📊 {isAr?'تصدير Excel':'Export Excel'}</button>
             {fromArchive
-              ? <button className="btn btn-secondary" onClick={onBack}>← Archive</button>
-              : <button className="btn btn-secondary" onClick={onNewPatient}>← New Patient</button>}
+              ? <button className="btn btn-secondary" onClick={onBack}>{isAr?'← الأرشيف':'← Archive'}</button>
+              : <button className="btn btn-secondary" onClick={onNewPatient}>{isAr?'← مريض جديد':'← New Patient'}</button>}
           </div>
         </div>
       </div>
@@ -1324,10 +1390,11 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
         </div>
       )}
       <div className="kf">
-        <h2>Key Findings</h2>
+        <h2>{T.keyFindings}</h2>
         {report.findings.map((f,i)=>{
           const icon={normal:'✅',borderline:'⚠️',abnormal:'🔴',info:'ℹ️'}[f.level]||'→';
-          return(<div key={i} className="kf-item"><span className="kf-icon">{icon}</span><span className={`kf-text ${f.level}`}>{f.text}</span></div>);
+          const txt=isAr&&f.arText?f.arText:f.text;
+          return(<div key={i} className="kf-item"><span className="kf-icon">{icon}</span><span className={`kf-text ${f.level}`}>{txt}</span></div>);
         })}
       </div>
       {/* ── Progress comparison (only when multiple visits exist) ── */}
@@ -1346,7 +1413,7 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
         ];
         return(
           <div style={{background:'linear-gradient(135deg,#0f172a,#1e3a5f)',borderRadius:14,padding:'18px 22px',marginBottom:18}}>
-            <p style={{fontSize:11,fontWeight:700,letterSpacing:'.07em',color:'rgba(255,255,255,.45)',textTransform:'uppercase',marginBottom:8}}>Treatment Progress — {allVisits[0].visitLabel||'T0'} → {allVisits[allVisits.length-1].visitLabel||`T${allVisits.length-1}`}</p>
+            <p style={{fontSize:11,fontWeight:700,letterSpacing:'.07em',color:'rgba(255,255,255,.45)',textTransform:'uppercase',marginBottom:8}}>{T.progress} — {allVisits[0].visitLabel||'T0'} → {allVisits[allVisits.length-1].visitLabel||`T${allVisits.length-1}`}</p>
             <div style={{overflowX:'auto'}}>
               <table style={{width:'100%',fontSize:12,color:'#e2e8f0',borderCollapse:'collapse'}}>
                 <thead>
@@ -1376,80 +1443,80 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
         );
       })()}
       <div className="results-grid">
-        <RCard title="Facial Symmetry" flag={report.sym.flag}>
+        <RCard title={T.symmetry} flag={report.sym.flag}>
           <table className="meas-table"><tbody>
-            <Row label="Chin deviation from midline"  val={report.sym.chinDev}   norm="< 2 mm"/>
-            <Row label="Nasal tip deviation"          val={report.sym.noseDev}   norm="< 2 mm"/>
-            <Row label="Alar base asymmetry"          val={report.sym.alarAsym}  norm="< 2 mm"/>
-            <Row label="Mouth corner asymmetry"       val={report.sym.mouthAsym} norm="< 2 mm"/>
-            <Row label="Canthus asymmetry"            val={report.sym.canthAsym} norm="< 2 mm"/>
+            <Row label={T.chinDev}   val={report.sym.chinDev}   norm="< 2 mm"/>
+            <Row label={T.noseDev}   val={report.sym.noseDev}   norm="< 2 mm"/>
+            <Row label={T.alarAsym}  val={report.sym.alarAsym}  norm="< 2 mm"/>
+            <Row label={T.mouthAsym} val={report.sym.mouthAsym} norm="< 2 mm"/>
+            <Row label={T.canthAsym} val={report.sym.canthAsym} norm="< 2 mm"/>
           </tbody></table>
-          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:6}}>Source: Arnett &amp; Bergman (1993)</p>
+          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:6}}>Arnett &amp; Bergman (1993)</p>
         </RCard>
-        <RCard title="Facial Thirds" flag={report.thirds.flag}>
-          {[['Upper third (inferred)',report.thirds.upPct],['Middle third (Gl→Sn)',report.thirds.midPct],["Lower third (Sn→Me')",report.thirds.lowPct]].map(([label,pct])=>pct!=null&&(
+        <RCard title={T.thirds} flag={report.thirds.flag}>
+          {[[T.upThird,report.thirds.upPct],[T.midThird,report.thirds.midPct],[T.lowThird,report.thirds.lowPct]].map(([label,pct])=>pct!=null&&(
             <div key={label} style={{marginBottom:8}}>
               <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--gray-600)',marginBottom:2}}><span>{label}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{pct.toFixed(1)}%</span></div>
               <div className="thirds-bar"><div style={{width:`${Math.min(100,pct)}%`,height:'100%',borderRadius:999,background:Math.abs(pct-33.3)>5?'#f87171':Math.abs(pct-33.3)>3?'#fbbf24':'#4ade80'}}/></div>
             </div>
           ))}
-          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:4}}>Ideal 33.3% each · Source: Farkas (1994)</p>
+          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:4}}>{T.thirdsNote}</p>
         </RCard>
-        <RCard title="Skeletal Class Estimate">
+        <RCard title={T.skeletal}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-            <span style={{fontSize:12,color:'var(--gray-500)'}}>Soft-tissue estimate · <em style={{textTransform:'capitalize'}}>{report.ethnicity||'caucasian'} norms</em></span>
+            <span style={{fontSize:12,color:'var(--gray-500)'}}>{T.softTissueEst} · <em style={{textTransform:'capitalize'}}>{report.ethnicity||'caucasian'} {T.normsLabel}</em></span>
             <span className={`badge ${report.skel.cls?.includes('III')?'class-III':report.skel.cls?.includes('II')?'class-II':'class-I'}`} style={{padding:'4px 12px',fontWeight:700}}>{report.skel.cls}</span>
           </div>
           <table className="meas-table"><tbody>
-            <Row label="Facial convexity (Gl–Sn–Pog)"     val={report.skel.convexity} norm="165–175°"         unit="°"/>
-            <Row label="Nasolabial angle (Cm–Sn–Ls)"      val={report.skel.nasolabial} norm="90–110°"         unit="°"/>
-            <Row label="Upper lip to E-plane"              val={report.skel.upperE}    norm={`${report.eNorm?.upper??-4} mm`}/>
-            <Row label="Lower lip to E-plane"              val={report.skel.lowerE}    norm={`${report.eNorm?.lower??-2} mm`}/>
-            <Row label="Pog' to Sn vertical"               val={report.skel.pogSn}     norm="≈ 0 mm (Class I)"/>
+            <Row label={T.convexity}      val={report.skel.convexity} norm="165–175°"         unit="°"/>
+            <Row label={T.nasolabialSkel} val={report.skel.nasolabial} norm="90–110°"         unit="°"/>
+            <Row label={T.upperEPlane}    val={report.skel.upperE}    norm={`${report.eNorm?.upper??-4} mm`}/>
+            <Row label={T.lowerEPlane}    val={report.skel.lowerE}    norm={`${report.eNorm?.lower??-2} mm`}/>
+            <Row label={T.pogSn}          val={report.skel.pogSn}     norm="≈ 0 mm (Class I)"/>
           </tbody></table>
-          <div className="note-box">⚠ Soft-tissue estimate only. Confirm with lateral cephalogram.</div>
+          <div className="note-box">{T.skelNote}</div>
         </RCard>
-        <RCard title="Lip Competence & Soft Tissue" flag={report.lip.flag}>
+        <RCard title={T.lip} flag={report.lip.flag}>
           <table className="meas-table"><tbody>
-            <Row label="Upper lip length (Sn→Sto)"        val={report.lip.ulLen}        norm="19–22mm (F) · 20–24mm (M)"/>
-            <Row label="Lower lip length (Sto→Me')"       val={report.lip.llLen}        norm="38–44 mm"/>
-            <Row label="Interlabial gap (rest)"            val={report.lip.gap}          norm="0–3 mm"/>
-            <Row label="Nasolabial angle"                  val={report.lip.nasolabial}   norm="90–110°"  unit="°"/>
-            <Row label="Mentolabial fold"                  val={report.lip.mentolabial}  norm="120–135°" unit="°"/>
-            <Row label="Nose projection (Goode's ratio)"   val={report.lip.goodesRatio}  norm="0.55–0.60"/>
+            <Row label={T.ulLen}        val={report.lip.ulLen}        norm="19–22mm (F) · 20–24mm (M)"/>
+            <Row label={T.llLen}        val={report.lip.llLen}        norm="38–44 mm"/>
+            <Row label={T.gap}          val={report.lip.gap}          norm="0–3 mm"/>
+            <Row label={T.nasolabialLip} val={report.lip.nasolabial}  norm="90–110°"  unit="°"/>
+            <Row label={T.mentolabial}  val={report.lip.mentolabial}  norm="120–135°" unit="°"/>
+            <Row label={T.goodesRatio}  val={report.lip.goodesRatio}  norm="0.55–0.60"/>
           </tbody></table>
-          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:6}}>Sources: Arnett &amp; Bergman (1993) · Goode (1981)</p>
+          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:6}}>Arnett &amp; Bergman (1993) · Goode (1981)</p>
         </RCard>
-        <RCard title="Smile Arc & Buccal Corridor" flag={report.smile.flag}>
+        <RCard title={T.smile} flag={report.smile.flag}>
           <div style={{marginBottom:10}}>
-            <p style={{fontSize:12,color:'var(--gray-500)',marginBottom:3}}>Smile arc</p>
+            <p style={{fontSize:12,color:'var(--gray-500)',marginBottom:3}}>{T.smileArc}</p>
             <p style={{fontWeight:700,fontSize:16,textTransform:'capitalize',color:{consonant:'var(--green)',flat:'var(--amber)',reverse:'var(--red)',indeterminate:'var(--gray-400)'}[report.smile.arc]||'var(--gray-400)'}}>
-              {report.smile.arc}
+              {isAr?{consonant:'متناسق',flat:'مسطح',reverse:'معكوس',indeterminate:'غير محدد'}[report.smile.arc]||report.smile.arc:report.smile.arc}
             </p>
-            <p style={{fontSize:11,color:'var(--gray-400)'}}>Consonant = aesthetic ideal · Sarver &amp; Ackerman (2001)</p>
+            <p style={{fontSize:11,color:'var(--gray-400)'}}>{T.arcNote}</p>
           </div>
           <table className="meas-table"><tbody>
-            <Row label="Buccal corridor — left"  val={report.smile.bcLeft}  norm="10–15%" unit="%"/>
-            <Row label="Buccal corridor — right" val={report.smile.bcRight} norm="10–15%" unit="%"/>
+            <Row label={T.bcLeft}  val={report.smile.bcLeft}  norm="10–15%" unit="%"/>
+            <Row label={T.bcRight} val={report.smile.bcRight} norm="10–15%" unit="%"/>
           </tbody></table>
         </RCard>
-        <RCard title="Dental Midline" flag={report.mid.flag}>
+        <RCard title={T.midline} flag={report.mid.flag}>
           <table className="meas-table"><tbody>
-            <Row label="Upper dental midline deviation" val={report.mid.udmDev} norm="< 1 mm"/>
+            <Row label={T.udmDev} val={report.mid.udmDev} norm="< 1 mm"/>
           </tbody></table>
-          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:6}}>From facial midline (Gl) · Source: Peck &amp; Peck (1995)</p>
+          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:6}}>{T.midlineNote}</p>
         </RCard>
-        <RCard title="Overjet & Overbite Estimate" wide>
-          <div className="note-box" style={{marginBottom:12}}>⚠ Photographic estimate — confirm with clinical measurement and radiographs.</div>
+        <RCard title={T.ojOb} wide>
+          <div className="note-box" style={{marginBottom:12}}>{T.ojNote}</div>
           <table className="meas-table"><tbody>
             <tr>
-              <td style={{width:'28%'}}>Overjet</td>
+              <td style={{width:'28%'}}>{T.overjet}</td>
               <td>{report.oj.oj!=null?`${report.oj.oj.toFixed(1)} mm`:'—'}</td>
               <td><span className={`badge ${({normal:'bn',increased:'bb',severely_increased:'ba',reverse:'ba',edge_to_edge:'bb',not_measured:'bm'}[report.oj.ojCls]||'bm')}`}>{report.oj.ojCls.replace(/_/g,' ')}</span></td>
               <td style={{fontSize:11,color:'var(--gray-400)',paddingLeft:10}}>Norm: 2–4 mm</td>
             </tr>
             <tr>
-              <td>Overbite</td>
+              <td>{T.overbite}</td>
               <td>{report.oj.ob!=null?`${report.oj.ob.toFixed(1)} mm`:'—'}</td>
               <td><span className={`badge ${({normal:'bn',increased:'bb',severely_increased:'ba',open_bite:'ba',edge_to_edge:'bb',not_measured:'bm'}[report.oj.obCls]||'bm')}`}>{report.oj.obCls.replace(/_/g,' ')}</span></td>
               <td style={{fontSize:11,color:'var(--gray-400)',paddingLeft:10}}>Norm: 2–4 mm</td>
@@ -1459,10 +1526,9 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
         </RCard>
       </div>
       <div className="disclaimer">
-        <strong>Disclaimer:</strong> This analysis is intended to assist clinical assessment and does not replace
-        the judgment of a qualified orthodontist. All measurements must be verified clinically before treatment planning.
-        Calibration: outer canthi × 0.70 as IPD proxy (Farkas 1994, IPD {ipdMm} mm).
-        E-plane norms apply the selected ethnicity set (Caucasian: Ricketts 1968; Arab: Bishara 1986).
+        <strong>{isAr?'إخلاء مسؤولية':'Disclaimer'}:</strong> {T.disclaimer}{' '}
+        {isAr?`المعايرة: مسافة المآق × 0.70 (Farkas 1994، IPD ${ipdMm} مم).`:`Calibration: outer canthi × 0.70 as IPD proxy (Farkas 1994, IPD ${ipdMm} mm).`}{' '}
+        {T.eNormNote}
       </div>
     </div>
   );
