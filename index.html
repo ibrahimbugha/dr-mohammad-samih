@@ -186,8 +186,8 @@ canvas{display:block}
 /* ── Print ── */
 @media print{
   .hdr,.pbar,.no-print{display:none!important}
-  body{background:#fff;font-family:'Inter',system-ui,sans-serif}
-  .main{padding:10mm 14mm;max-width:100%}
+  body{background:#fff;font-family:'Inter',system-ui,sans-serif;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .main{padding:8mm 12mm;max-width:100%}
   .branding{position:fixed;bottom:6mm;right:8mm;pointer-events:none;text-align:right}
   .branding-inner{background:none;border:none;backdrop-filter:none;padding:0}
   .branding-line1{font-size:7.5pt;color:#94a3b8;font-weight:600;letter-spacing:.06em;text-transform:uppercase;display:block}
@@ -199,6 +199,15 @@ canvas{display:block}
   body{background:#fff}
   .results-grid{grid-template-columns:1fr 1fr}
   .rcard.wide{grid-column:span 2}
+  .print-hero{background:#fff!important;border:1.5px solid #1e3a5f!important;border-radius:10px!important;padding:10px 14px!important;margin-bottom:10px!important;break-after:avoid!important}
+  .print-hero h1{color:#0f172a!important;font-size:17pt!important}
+  .print-hero p,.print-hero span{color:#334155!important}
+  .print-progress{background:#f8fafc!important;border:1.5px solid #1e3a5f!important;border-radius:10px!important;padding:12px 16px!important;margin-bottom:12px!important}
+  .print-progress p,.print-progress td{color:#1e293b!important}
+  .print-notes-footer{display:block!important;margin-top:14px;border-top:1.5px solid #e2e8f0;padding-top:10px}
+  .print-notes-footer-lbl{font-size:9pt;font-weight:700;color:#64748b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+  .print-notes-footer-body{font-size:10pt;color:#1e293b;white-space:pre-wrap;line-height:1.5}
+  .print-hero .print-hero-notes{display:none!important}
 }
 </style>
 </head>
@@ -1513,13 +1522,13 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
   return(
     <div className="main" dir={isAr?'rtl':'ltr'} style={isAr?{fontFamily:'Segoe UI,Tahoma,Arial,sans-serif'}:{}}>
       {/* Report hero */}
-      <div style={{background:'linear-gradient(135deg,#0f172a,#1e3a5f)',borderRadius:16,padding:'24px 28px',marginBottom:22,boxShadow:'0 6px 24px rgba(15,23,42,.3)'}}>
+      <div className="print-hero" style={{background:'linear-gradient(135deg,#0f172a,#1e3a5f)',borderRadius:16,padding:'24px 28px',marginBottom:22,boxShadow:'0 6px 24px rgba(15,23,42,.3)'}}>
         <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:14}}>
           <div>
             <p style={{fontSize:11,color:'rgba(255,255,255,.45)',fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',marginBottom:6}}>{T.reportTitle}</p>
             <h1 style={{fontSize:24,fontWeight:800,color:'#fff',letterSpacing:'-.02em',fontFamily:'monospace'}}>{pid}{report.patientName?<span style={{fontSize:16,fontWeight:500,color:'rgba(255,255,255,.7)',fontFamily:'Inter,sans-serif',letterSpacing:'normal',marginLeft:10}}>· {report.patientName}</span>:null}</h1>
-            <p style={{fontSize:12,color:'rgba(255,255,255,.45)',marginTop:5}}>{report.ts} · {report.scale?`Scale: ${report.scale.toFixed(3)} mm/px`:'Uncalibrated'} · IPD: {ipdMm} mm · <span style={{textTransform:'capitalize'}}>{report.ethnicity||'caucasian'} norms</span></p>
-            {report.notes&&<p style={{fontSize:12,color:'rgba(255,255,255,.65)',marginTop:6,background:'rgba(255,255,255,.07)',borderRadius:8,padding:'6px 10px',lineHeight:1.5,whiteSpace:'pre-wrap'}}>📝 {report.notes}</p>}
+            <p style={{fontSize:12,color:'rgba(255,255,255,.45)',marginTop:5}}>{report.ts} · {report.scale?`Scale: ${report.scale.toFixed(3)} mm/px`:'Uncalibrated'} · IPD: {ipdMm} mm · <span style={{textTransform:'capitalize'}}>{report.ethnicity||'caucasian'} norms</span>{report.phone?<span style={{marginLeft:8}}>· 📞 {report.phone}</span>:null}</p>
+            {report.notes&&<p className="print-hero-notes" style={{fontSize:12,color:'rgba(255,255,255,.65)',marginTop:6,background:'rgba(255,255,255,.07)',borderRadius:8,padding:'6px 10px',lineHeight:1.5,whiteSpace:'pre-wrap'}}>📝 {report.notes}</p>}
             <div style={{display:'flex',gap:10,marginTop:12}}>
               {abnCount>0&&<span style={{background:'rgba(239,68,68,.2)',border:'1px solid rgba(239,68,68,.4)',borderRadius:20,padding:'3px 11px',fontSize:11,color:'#fca5a5',fontWeight:600}}>🔴 {abnCount} Abnormal</span>}
               {borderCount>0&&<span style={{background:'rgba(245,158,11,.15)',border:'1px solid rgba(245,158,11,.35)',borderRadius:20,padding:'3px 11px',fontSize:11,color:'#fcd34d',fontWeight:600}}>⚠️ {borderCount} Borderline</span>}
@@ -1573,7 +1582,7 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
           {label:'Lower facial third',a:first?.thirds?.lowPct,    b:cur?.thirds?.lowPct,     unit:'%'},
         ];
         return(
-          <div style={{background:'linear-gradient(135deg,#0f172a,#1e3a5f)',borderRadius:14,padding:'18px 22px',marginBottom:18}}>
+          <div className="print-progress" style={{background:'linear-gradient(135deg,#0f172a,#1e3a5f)',borderRadius:14,padding:'18px 22px',marginBottom:18}}>
             <p style={{fontSize:11,fontWeight:700,letterSpacing:'.07em',color:'rgba(255,255,255,.45)',textTransform:'uppercase',marginBottom:8}}>{T.progress} — {allVisits[0].visitLabel||'T0'} → {allVisits[allVisits.length-1].visitLabel||`T${allVisits.length-1}`}</p>
             <div style={{overflowX:'auto'}}>
               <table style={{width:'100%',fontSize:12,color:'#e2e8f0',borderCollapse:'collapse'}}>
@@ -1691,6 +1700,7 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
         {isAr?`المعايرة: مسافة المآق × 0.70 (Farkas 1994، IPD ${ipdMm} مم).`:`Calibration: outer canthi × 0.70 as IPD proxy (Farkas 1994, IPD ${ipdMm} mm).`}{' '}
         {T.eNormNote}
       </div>
+      {report.notes&&(<div className="print-notes-footer" style={{display:'none'}}><div className="print-notes-footer-lbl">📝 Notes</div><div className="print-notes-footer-body">{report.notes}</div></div>)}
     </div>
   );
 }
@@ -1880,10 +1890,13 @@ function App(){
   const [visitLabel,setVisitLabel]   = useState('Initial visit');
   const [selectedVisitIdx,setSelectedVisitIdx] = useState(null); // null = latest
   const [archivePatient,setArchivePatient] = useState(null); // patient record viewed from archive
+  const [phone,setPhone]               = useState('');
   const [nameSuggestions,setNameSuggestions] = useState([]); // autocomplete suggestions for patient name
   const [showNameSugg,setShowNameSugg] = useState(false);
   const [pidSuggestions,setPidSuggestions] = useState([]); // autocomplete suggestions for patient ID
   const [showPidSugg,setShowPidSugg] = useState(false);
+  const [phoneSuggestions,setPhoneSuggestions] = useState([]);
+  const [showPhoneSugg,setShowPhoneSugg] = useState(false);
 
   function handleFile(pt){return file=>{
     const url=URL.createObjectURL(file);
@@ -1914,8 +1927,8 @@ function App(){
             if(previews[k]) thumbs[k]=await generateThumbnail(previews[k]);
           }
           const rec={
-            pid,patientName,ipdMm,notes,visitLabel,
-            report:{...r,pid,patientName},
+            pid,patientName,phone,ipdMm,notes,visitLabel,
+            report:{...r,pid,patientName,phone},
             savedAt:new Date().toISOString(),
             thumbnails:thumbs,
             landmarks:next,
@@ -1941,6 +1954,7 @@ function App(){
     setPreviews({frontal:null,profile:null,smile:null});
     setConfirmed({});setReport(null);setError(null);
     setPid('P'+Date.now().toString().slice(-6));
+    setPatientName('');setPhone('');setNotes('');
   }
 
   const activeStep=stage==='analysing'?4:STEPS.findIndex(s=>s.key===stage);
@@ -2091,7 +2105,7 @@ function App(){
                     <input className="pid-input" value={pid}
                       onChange={e=>{
                         const v=e.target.value;
-                        setPid(v);setVisitLabel('Initial visit');setPatientName('');setNameSuggestions([]);setShowNameSugg(false);
+                        setPid(v);setVisitLabel('Initial visit');setPatientName('');setPhone('');setNameSuggestions([]);setShowNameSugg(false);
                         if(v.trim().length>=1){
                           const q=v.trim().toLowerCase();
                           const matches=loadArchive().filter(p=>p.pid.toLowerCase().includes(q)).slice(0,5);
@@ -2112,8 +2126,10 @@ function App(){
                               onMouseDown={()=>{
                                 setPid(p.pid);
                                 setPatientName(p.patientName||'');
+                                setPhone(p.phone||'');
                                 setPidSuggestions([]);setShowPidSugg(false);
                                 setNameSuggestions([]);setShowNameSugg(false);
+                                setPhoneSuggestions([]);setShowPhoneSugg(false);
                                 const nextN=allV.length+1;
                                 setVisitLabel(`Visit ${nextN}`);
                               }}
@@ -2156,7 +2172,9 @@ function App(){
                               onMouseDown={()=>{
                                 setPatientName(p.patientName||'');
                                 setPid(p.pid);
+                                setPhone(p.phone||'');
                                 setShowNameSugg(false);
+                                setPhoneSuggestions([]);setShowPhoneSugg(false);
                                 const nextN=allV.length+1;
                                 setVisitLabel(`Visit ${nextN}`);
                               }}
@@ -2173,6 +2191,15 @@ function App(){
                         })}
                       </div>
                     )}
+                  </div>
+                  <div style={{position:'relative',marginTop:5}}>
+                    <input type="tel" value={phone}
+                      onChange={e=>{const v=e.target.value;setPhone(v);if(v.trim().length>=2){const q=v.trim().toLowerCase();const matches=loadArchive().filter(p=>(p.phone||'').toLowerCase().includes(q)&&p.phone).slice(0,5);setPhoneSuggestions(matches);setShowPhoneSugg(matches.length>0);}else{setPhoneSuggestions([]);setShowPhoneSugg(false);}}}
+                      onBlur={()=>setTimeout(()=>setShowPhoneSugg(false),150)}
+                      onFocus={()=>{if(phoneSuggestions.length>0)setShowPhoneSugg(true);}}
+                      placeholder="Phone (optional)"
+                      style={{width:'100%',border:'1.5px solid var(--gray-200)',borderRadius:7,padding:'4px 8px',fontSize:12,outline:'none',boxSizing:'border-box',fontFamily:'monospace'}}/>
+                    {showPhoneSugg&&(<div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:999,background:'white',border:'1.5px solid #93c5fd',borderRadius:8,boxShadow:'0 4px 16px rgba(59,130,246,.15)',marginTop:2,overflow:'hidden'}}>{phoneSuggestions.map((p,i)=>(<div key={p.pid+i} onMouseDown={()=>{setPhone(p.phone||'');setPid(p.pid);setPatientName(p.patientName||'');setPhoneSuggestions([]);setShowPhoneSugg(false);setNameSuggestions([]);setShowNameSugg(false);const allV=getAllVisits(p);setVisitLabel('Visit '+(allV.length+1));}} style={{padding:'7px 10px',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12,borderBottom:i<phoneSuggestions.length-1?'1px solid #e0e7ff':undefined}} onMouseEnter={e=>e.currentTarget.style.background='#eff6ff'} onMouseLeave={e=>e.currentTarget.style.background='white'}><span style={{fontWeight:700,color:'#1e40af',fontFamily:'monospace'}}>{p.phone}</span>{p.patientName&&<span style={{color:'var(--gray-500)',marginLeft:6,fontSize:11}}>{p.patientName}</span>}</div>))}</div>)}
                   </div>
                   {isReturn&&(
                     <input value={visitLabel} onChange={e=>setVisitLabel(e.target.value)} placeholder="Visit label…"
