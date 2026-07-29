@@ -207,7 +207,13 @@ canvas{display:block}
   .print-notes-footer{display:block!important;margin-top:14px;border-top:1.5px solid #e2e8f0;padding-top:10px}
   .print-notes-footer-lbl{font-size:9pt;font-weight:700;color:#64748b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
   .print-notes-footer-body{font-size:10pt;color:#1e293b;white-space:pre-wrap;line-height:1.5}
+  /* hide inline notes from hero in print (shown in footer instead) */
   .print-hero .print-hero-notes{display:none!important}
+  /* Dev mode extra page */
+  .dev-print-page{display:block!important;page-break-before:always;font-family:monospace}
+  /* Print photo strip */
+  .photo-hero-strip img{-webkit-print-color-adjust:exact;print-color-adjust:exact;border-radius:8px;border:1px solid #94a3b8!important}
+  .photo-hero-strip{border-top:1px solid rgba(0,0,0,.15)!important;padding-top:10px!important;margin-top:10px!important}
 }
 </style>
 </head>
@@ -1520,10 +1526,100 @@ const TR={
     eNormNote:'معايير المستوى E تتبع مجموعة المعايير المختارة (القوقازيون: Ricketts 1968؛ العرب: Bishara 1986).',
   }
 };
-function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,selectedVisitIdx}){
+// DevPanel: full calculation breakdown
+function DevPanel({report,ipdMm}){
+  const sc=report.scale;
+  const r2=v=>v!=null?Math.round(v*100)/100:'—';
+  const px=v=>sc&&v!=null?r2(Math.abs(v)/sc)+'px':'—px';
+  const {sym,thirds,skel,lip,smile,mid,oj,eNorm}=report;
+  const clr=s=>s==='NORMAL'?'#16a34a':s==='INFO'?'#2563eb':s.startsWith('CLASS')?'#7c3aed':'#dc2626';
+  const Section=({title,children})=>(
+    <div style={{marginBottom:14,borderRadius:8,overflow:'hidden',border:'1.5px solid #e2e8f0',breakInside:'avoid'}}>
+      <div style={{background:'#0f172a',color:'#93c5fd',fontWeight:700,fontSize:10,padding:'5px 12px',letterSpacing:'.07em',textTransform:'uppercase'}}>{title}</div>
+      <div style={{padding:'10px 12px',background:'#f8fafc',fontFamily:'monospace',fontSize:11,lineHeight:1.9}}>{children}</div>
+    </div>
+  );
+  const DRow=({label,formula,val,norm,sts})=>(
+    <div style={{borderBottom:'1px dashed #e2e8f0',paddingBottom:2,marginBottom:2}}>
+      <b style={{color:'#334155'}}>{label}: </b>
+      <span style={{color:'#64748b'}}>{formula}</span>
+      {' = '}<b style={{color:'#0f172a'}}>{val}</b>
+      {'  '}<span style={{color:clr(sts),fontWeight:700,fontSize:10}}>[norm: {norm} → {sts}]</span>
+    </div>
+  );
+  return(
+    <div>
+      <div style={{background:'#0f172a',borderRadius:10,padding:'12px 16px',marginBottom:14,color:'#93c5fd',display:'flex',alignItems:'center',gap:12}}>
+        <span style={{fontSize:20}}>⚙️</span>
+        <div>
+          <div style={{fontWeight:700,fontSize:13}}>DEVELOPER MODE — Full Calculation Breakdown</div>
+          <div style={{color:'rgba(255,255,255,.4)',fontSize:11}}>All formulas with actual computed values · Not for clinical use</div>
+        </div>
+      </div>
+      <Section title="Calibration">
+        {sc
+          ?<><div><b>Scale:</b> IPD({ipdMm}mm) / (ExR–ExL × 0.70) = {ipdMm} / ({r2(ipdMm/sc/0.70)}px × 0.70) = <b>{sc.toFixed(5)} mm/px</b></div>
+            <div style={{color:'#64748b',fontSize:10}}>Ref: Farkas 1994 · outer canthi distance × 0.70 as IPD proxy</div></>
+          :<div style={{color:'#ef4444'}}>⚠ Scale not computed — outer canthi (ExR/ExL) landmarks missing</div>}
+      </Section>
+      <Section title="Facial Symmetry (Frontal) — Arnett &amp; Bergman 1993">
+        <div style={{color:'#64748b',fontSize:10,marginBottom:4}}>Midline X = Gl.x (or Sn.x). All deviations = |landmark.x − midline.x| × scale</div>
+        {sym.chinDev!=null&&<DRow label="Chin (Me)" formula={`|Me.x−midline|×scale = ${px(sym.chinDev)}×${sc?.toFixed(4)}`} val={`${sym.chinDev} mm`} norm="&lt;2mm" sts={sym.chinDev>2?'ABNORMAL':sym.chinDev>1.5?'BORDERLINE':'NORMAL'}/>}
+        {sym.noseDev!=null&&<DRow label="Nose tip (Prn)" formula={`|Prn.x−midline|×scale = ${px(sym.noseDev)}×${sc?.toFixed(4)}`} val={`${sym.noseDev} mm`} norm="&lt;2mm" sts={sym.noseDev>2?'ABNORMAL':sym.noseDev>1.5?'BORDERLINE':'NORMAL'}/>}
+        {sym.alarAsym!=null&&<DRow label="Alar base" formula={`|(AlR+AlL)/2−mid|×sc = ${px(sym.alarAsym)}×${sc?.toFixed(4)}`} val={`${sym.alarAsym} mm`} norm="&lt;2mm" sts={sym.alarAsym>2?'ABNORMAL':sym.alarAsym>1.5?'BORDERLINE':'NORMAL'}/>}
+        {sym.mouthAsym!=null&&<DRow label="Mouth corners" formula={`|(ChR+ChL)/2−mid|×sc = ${px(sym.mouthAsym)}×${sc?.toFixed(4)}`} val={`${sym.mouthAsym} mm`} norm="&lt;2mm" sts={sym.mouthAsym>2?'ABNORMAL':sym.mouthAsym>1.5?'BORDERLINE':'NORMAL'}/>}
+        {sym.canthAsym!=null&&<DRow label="Canthi" formula={`|(EnR+EnL)/2−mid|×sc = ${px(sym.canthAsym)}×${sc?.toFixed(4)}`} val={`${sym.canthAsym} mm`} norm="&lt;2mm" sts={sym.canthAsym>2?'ABNORMAL':sym.canthAsym>1.5?'BORDERLINE':'NORMAL'}/>}
+        <div style={{marginTop:4,color:'#334155'}}>Overall: <b>{sym.flag?.replace(/_/g,' ').toUpperCase()}</b></div>
+      </Section>
+      <Section title="Facial Thirds (Frontal)">
+        <div style={{color:'#64748b',fontSize:10,marginBottom:4}}>Vertical proportions Gl→Sn→Me. Each third = segment / total × 100</div>
+        {thirds.upPct!=null&&<DRow label="Upper 1/3" formula="hairline→Gl / total" val={`${thirds.upPct}%`} norm="≈33.3%" sts={Math.abs(thirds.upPct-33.3)>5?'ABNORMAL':Math.abs(thirds.upPct-33.3)>3?'BORDERLINE':'NORMAL'}/>}
+        {thirds.midPct!=null&&<DRow label="Middle 1/3" formula="(Sn.y−Gl.y)/(Me.y−Gl.y)×100" val={`${thirds.midPct}%`} norm="≈33.3%" sts={Math.abs(thirds.midPct-33.3)>5?'ABNORMAL':Math.abs(thirds.midPct-33.3)>3?'BORDERLINE':'NORMAL'}/>}
+        {thirds.lowPct!=null&&<DRow label="Lower 1/3" formula="(Me.y−Sn.y)/(Me.y−Gl.y)×100" val={`${thirds.lowPct}%`} norm="≈33.3%" sts={Math.abs(thirds.lowPct-33.3)>5?'ABNORMAL':Math.abs(thirds.lowPct-33.3)>3?'BORDERLINE':'NORMAL'}/>}
+      </Section>
+      <Section title="Skeletal Analysis (Profile)">
+        <div style={{color:'#64748b',fontSize:10,marginBottom:4}}>Ethnicity norms: {report.ethnicity||'caucasian'} · Ricketts 1968 / Bishara 1986</div>
+        {skel.convexity!=null&&<DRow label="Convexity" formula="angle(Gl→Sn→Pog) at vertex Sn" val={`${skel.convexity}°`} norm="165–175°" sts={skel.convexity<163?'ABNORMAL(II)':skel.convexity<165?'BORDERLINE(II)':skel.convexity>177?'ABNORMAL(III)':skel.convexity>175?'BORDERLINE(III)':'NORMAL'}/>}
+        {skel.nasolabial!=null&&<DRow label="Nasolabial" formula="angle(Cm→Sn→Ls)" val={`${skel.nasolabial}°`} norm="90–110°" sts={skel.nasolabial<85||skel.nasolabial>120?'ABNORMAL':skel.nasolabial<90||skel.nasolabial>110?'BORDERLINE':'NORMAL'}/>}
+        {skel.upperE!=null&&<DRow label="Upper E-plane" formula={`ptLineSigned(Ls,Prn→Pog)×−fdir×sc = ${px(skel.upperE)}×${sc?.toFixed(4)}`} val={`${skel.upperE} mm`} norm={`${eNorm?.upper??-4}mm`} sts={Math.abs(skel.upperE-(eNorm?.upper??-4))>4?'ABNORMAL':Math.abs(skel.upperE-(eNorm?.upper??-4))>2?'BORDERLINE':'NORMAL'}/>}
+        {skel.lowerE!=null&&<DRow label="Lower E-plane" formula={`ptLineSigned(Li,Prn→Pog)×−fdir×sc = ${px(skel.lowerE)}×${sc?.toFixed(4)}`} val={`${skel.lowerE} mm`} norm={`${eNorm?.lower??-2}mm`} sts={Math.abs(skel.lowerE-(eNorm?.lower??-2))>4?'ABNORMAL':Math.abs(skel.lowerE-(eNorm?.lower??-2))>2?'BORDERLINE':'NORMAL'}/>}
+        {skel.pogSn!=null&&<DRow label="Pog–Sn" formula={`fdir×(Pog.x−Sn.x)×sc = ${px(skel.pogSn)}×${sc?.toFixed(4)}`} val={`${skel.pogSn} mm`} norm="≈0mm(I)" sts={skel.pogSn>2?'CLASS III':skel.pogSn<-5?'CLASS II':'CLASS I'}/>}
+        <div style={{marginTop:6,fontSize:12}}><b>Class: </b><span style={{color:'#3b82f6',fontWeight:700}}>{skel.cls}</span></div>
+        <div style={{fontSize:10,color:'#64748b'}}>Logic: convexity &lt;163°→II · &gt;177°→III · else pogSn&gt;2→III · &lt;−5→II · else I</div>
+      </Section>
+      <Section title="Lip Analysis (Profile)">
+        {lip.ulLen!=null&&<DRow label="Upper lip" formula={`dist(Sn,Sto)×sc = ${px(lip.ulLen)}×${sc?.toFixed(4)}`} val={`${lip.ulLen} mm`} norm="19–24mm" sts={lip.ulLen<19||lip.ulLen>24?'BORDERLINE':'NORMAL'}/>}
+        {lip.llLen!=null&&<DRow label="Lower lip" formula={`dist(Sto,Me)×sc = ${px(lip.llLen)}×${sc?.toFixed(4)}`} val={`${lip.llLen} mm`} norm="38–44mm" sts={lip.llLen<38||lip.llLen>44?'BORDERLINE':'NORMAL'}/>}
+        {lip.gap!=null&&<DRow label="Gap" formula={`max(0,(Li.y−Ls.y))×sc = ${px(lip.gap)}×${sc?.toFixed(4)}`} val={`${lip.gap} mm`} norm="0–3mm" sts={lip.gap>5?'ABNORMAL':lip.gap>3?'BORDERLINE':'NORMAL'}/>}
+        {lip.mentolabial!=null&&<DRow label="Mentolabial" formula="angle(Li→B→Pog)" val={`${lip.mentolabial}°`} norm="120–135°" sts={lip.mentolabial<120||lip.mentolabial>135?'BORDERLINE':'NORMAL'}/>}
+        {lip.goodesRatio!=null&&<DRow label="Goode ratio" formula={`nosePrj/noseLen = ${lip.nosePrj}/${lip.noseLen}`} val={`${lip.goodesRatio}`} norm="0.55–0.60" sts={lip.goodesRatio<0.55||lip.goodesRatio>0.60?'BORDERLINE':'NORMAL'}/>}
+      </Section>
+      <Section title="Smile &amp; Midline">
+        <div><b>Smile arc:</b> {smile.arc}</div>
+        {smile.bcLeft!=null&&<DRow label="L buccal" formula="(BCL.x−ChL.x)/(ChL.x−ChR.x)×100" val={`${smile.bcLeft}%`} norm="10–15%" sts={smile.bcLeft<10||smile.bcLeft>15?'BORDERLINE':'NORMAL'}/>}
+        {smile.bcRight!=null&&<DRow label="R buccal" formula="(ChR.x−BCR.x)/(ChL.x−ChR.x)×100" val={`${smile.bcRight}%`} norm="10–15%" sts={smile.bcRight<10||smile.bcRight>15?'BORDERLINE':'NORMAL'}/>}
+        {mid.udmDev!=null&&<DRow label="UDM deviation" formula={`|UDM_s.x−Gl.x|×sc = ${px(mid.udmDev)}×${sc?.toFixed(4)}`} val={`${mid.udmDev} mm`} norm="&lt;1mm" sts={mid.udmDev>2?'ABNORMAL':mid.udmDev>1?'BORDERLINE':'NORMAL'}/>}
+      </Section>
+      <Section title="Overjet / Overbite — Proffit &amp; Fields 2013">
+        <div style={{color:'#ef4444',fontSize:10,fontWeight:600,marginBottom:4}}>⚠ Photographic estimate only</div>
+        {oj.oj!=null&&<DRow label="Overjet" formula={`avg(|UI_R.x−LI_R.x|,|UI_L.x−LI_L.x|)×sc = ${px(oj.oj)}×${sc?.toFixed(4)}`} val={`${oj.oj} mm`} norm="2–4mm" sts={oj.ojCls==='normal'?'NORMAL':oj.ojCls.includes('severe')?'ABNORMAL':'BORDERLINE'}/>}
+        {oj.ob!=null&&<DRow label="Overbite" formula={`avg((LI_R.y−UI_R.y),(LI_L.y−UI_L.y))×sc = ${px(oj.ob)}×${sc?.toFixed(4)}`} val={`${oj.ob} mm`} norm="2–4mm" sts={oj.obCls==='normal'?'NORMAL':['open_bite','severely_increased'].includes(oj.obCls)?'ABNORMAL':'BORDERLINE'}/>}
+      </Section>
+    </div>
+  );
+}
+function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,selectedVisitIdx,thumbnails}){
   const [lang,setLang]=React.useState('en');
+  const [withPhotos,setWithPhotos]=React.useState(false);
+  const [devMode,setDevMode]=React.useState(false);
+  const [showDevConfirm,setShowDevConfirm]=React.useState(false);
+  const [activeTab,setActiveTab]=React.useState('report');
   const T=TR[lang]||TR.en;
   const isAr=lang==='ar';
+  React.useEffect(()=>{
+    const h=e=>{if(e.key==='1'&&!e.target.matches('input,textarea,select'))setShowDevConfirm(true);};
+    window.addEventListener('keydown',h);return()=>window.removeEventListener('keydown',h);
+  },[]);
   const flagLabel={within_normal_limits:T.normalLbl,borderline:T.borderlineLbl,abnormal:T.abnormalLbl,missing_data:T.noDataLbl};
   const abnCount=(report.findings||[]).filter(f=>f.level==='abnormal').length;
   const borderCount=(report.findings||[]).filter(f=>f.level==='borderline').length;
@@ -1546,6 +1642,16 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
               {borderCount>0&&<span style={{background:'rgba(245,158,11,.15)',border:'1px solid rgba(245,158,11,.35)',borderRadius:20,padding:'3px 11px',fontSize:11,color:'#fcd34d',fontWeight:600}}>⚠️ {borderCount} Borderline</span>}
               {normalCount>0&&<span style={{background:'rgba(34,197,94,.15)',border:'1px solid rgba(34,197,94,.3)',borderRadius:20,padding:'3px 11px',fontSize:11,color:'#86efac',fontWeight:600}}>✅ {normalCount} Normal</span>}
             </div>
+            {thumbnails&&(thumbnails.frontal||thumbnails.profile||thumbnails.smile)&&(
+              <div className="photo-hero-strip" style={{display:withPhotos?'flex':'none',gap:10,marginTop:14,alignItems:'flex-end'}}>
+                {['frontal','profile','smile'].map(k=>thumbnails[k]?(
+                  <div key={k} style={{textAlign:'center'}}>
+                    <img src={thumbnails[k]} alt={k} style={{width:72,height:90,objectFit:'cover',borderRadius:8,border:'2px solid rgba(255,255,255,.25)',display:'block'}}/>
+                    <span style={{fontSize:9,color:'rgba(255,255,255,.45)',textTransform:'capitalize',marginTop:3,display:'block'}}>{k}</span>
+                  </div>
+                ):null)}
+              </div>
+            )}
           </div>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}} className="no-print">
             <div style={{display:'flex',borderRadius:8,overflow:'hidden',border:'1.5px solid rgba(255,255,255,.25)'}}>
@@ -1558,7 +1664,8 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
                 </button>
               ))}
             </div>
-            <button className="btn btn-pdf" onClick={()=>window.print()}>📄 {isAr?'طباعة PDF':'Export PDF'}</button>
+            <button className="btn btn-pdf" onClick={()=>{setWithPhotos(true);window.addEventListener('afterprint',()=>setWithPhotos(false),{once:true});setTimeout(()=>window.print(),100);}}>🖼️ {isAr?'طباعة مع الصور':'Print with photos'}</button>
+            <button className="btn btn-secondary" style={{background:'rgba(255,255,255,.12)',color:'#e2e8f0',border:'1px solid rgba(255,255,255,.2)'}} onClick={()=>{setWithPhotos(false);setTimeout(()=>window.print(),50);}}>📄 {isAr?'طباعة PDF':'Export PDF'}</button>
             <button className="btn btn-xlsx" onClick={()=>exportExcel(report,pid,ipdMm)}>📊 {isAr?'تصدير Excel':'Export Excel'}</button>
             {fromArchive
               ? <button className="btn btn-secondary" onClick={onBack}>{isAr?'← الأرشيف':'← Archive'}</button>
@@ -1624,6 +1731,14 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
           </div>
         );
       })()}
+      {devMode&&(
+        <div className="no-print" style={{display:'flex',marginBottom:16,borderRadius:8,overflow:'hidden',border:'1.5px solid var(--gray-200)',width:'fit-content'}}>
+          <button onClick={()=>setActiveTab('report')} style={{padding:'8px 22px',border:'none',cursor:'pointer',fontWeight:700,fontSize:13,background:activeTab==='report'?'#3b82f6':'#f8fafc',color:activeTab==='report'?'#fff':'var(--gray-600)'}}>📊 Report</button>
+          <button onClick={()=>setActiveTab('dev')} style={{padding:'8px 22px',border:'none',cursor:'pointer',fontWeight:700,fontSize:13,background:activeTab==='dev'?'#3b82f6':'#f8fafc',color:activeTab==='dev'?'#fff':'var(--gray-600)'}}>⚙️ Dev Mode</button>
+        </div>
+      )}
+      {devMode&&activeTab==='dev'&&<DevPanel report={report} ipdMm={ipdMm}/>}
+      <div style={{display:devMode&&activeTab==='dev'?'none':'block'}}>
       <div className="results-grid">
         <RCard title={T.symmetry} flag={report.sym.flag}>
           <table className="meas-table"><tbody>
@@ -1713,6 +1828,25 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
         {T.eNormNote}
       </div>
       {report.notes&&(<div className="print-notes-footer" style={{display:'none'}}><div className="print-notes-footer-lbl">📝 Notes</div><div className="print-notes-footer-body">{report.notes}</div></div>)}
+      </div>
+      {devMode&&(
+        <div className="dev-print-page" style={{display:'none'}}>
+          <DevPanel report={report} ipdMm={ipdMm}/>
+        </div>
+      )}
+      {showDevConfirm&&(
+        <div className="no-print" style={{position:'fixed',inset:0,background:'rgba(0,0,0,.75)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <div style={{background:'#1e293b',borderRadius:16,padding:'28px 32px',maxWidth:380,textAlign:'center',boxShadow:'0 20px 60px rgba(0,0,0,.5)'}}>
+            <div style={{fontSize:40,marginBottom:12}}>⚙️</div>
+            <h2 style={{color:'#fff',marginBottom:8,fontSize:20,fontWeight:800}}>Activate Developer Mode?</h2>
+            <p style={{color:'rgba(255,255,255,.55)',fontSize:13,marginBottom:22,lineHeight:1.6}}>Shows all calculation formulas with actual computed values. Not intended for clinical use.</p>
+            <div style={{display:'flex',gap:10,justifyContent:'center'}}>
+              <button onClick={()=>{setDevMode(true);setShowDevConfirm(false);setActiveTab('dev');}} style={{background:'#3b82f6',color:'#fff',border:'none',borderRadius:8,padding:'10px 24px',fontWeight:700,cursor:'pointer',fontSize:14}}>✓ Activate</button>
+              <button onClick={()=>setShowDevConfirm(false)} style={{background:'rgba(255,255,255,.1)',color:'rgba(255,255,255,.7)',border:'none',borderRadius:8,padding:'10px 24px',cursor:'pointer',fontSize:14}}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1890,6 +2024,7 @@ function App(){
   const [stage,setStage]   = useState('upload');
   const [files,setFiles]   = useState({frontal:null,profile:null,smile:null});
   const [previews,setPreviews] = useState({frontal:null,profile:null,smile:null});
+  const [liveThumbs,setLiveThumbs] = useState({});
   const [dims,setDims]     = useState({frontal:{w:1024,h:768},profile:{w:1024,h:768},smile:{w:1024,h:768}});
   const [confirmed,setConfirmed] = useState({});
   const [report,setReport] = useState(null);
@@ -1946,6 +2081,7 @@ function App(){
             landmarks:next,
           };
           saveToArchive(rec);
+          setLiveThumbs(thumbs);
           setReport({...r,pid});setStage('results');
         }catch(e){setError('Analysis error: '+e.message);setStage('review-smile');}
       },350);
@@ -1964,7 +2100,7 @@ function App(){
   function handleReset(){
     setStage('upload');setFiles({frontal:null,profile:null,smile:null});
     setPreviews({frontal:null,profile:null,smile:null});
-    setConfirmed({});setReport(null);setError(null);
+    setConfirmed({});setReport(null);setError(null);setLiveThumbs({});
     setPid('P'+Date.now().toString().slice(-6));
     setPatientName('');setPhone('');setNotes('');
   }
@@ -2059,6 +2195,7 @@ function App(){
               fromArchive={true}
               allVisits={allV}
               selectedVisitIdx={selIdx}
+              thumbnails={archivePatient.thumbnails}
               onBack={()=>{setStage('archive');setSelectedVisitIdx(null);}}
               onNewPatient={handleReset}/>
           </>
@@ -2304,6 +2441,7 @@ function App(){
             fromArchive={false}
             allVisits={allV}
             selectedVisitIdx={allV?allV.length-1:null}
+            thumbnails={liveThumbs}
             onBack={()=>setStage('archive')}
             onNewPatient={handleReset}/>
         );
