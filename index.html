@@ -354,6 +354,29 @@ async function generateThumbnail(src,maxW=220){
     img.onerror=()=>res(null);img.src=src;
   });
 }
+async function generateAnnotatedThumbnail(src,lms,imgW,imgH,maxW=220){
+  return new Promise(res=>{
+    const img=new Image();img.crossOrigin='anonymous';
+    img.onload=()=>{
+      const s=maxW/imgW;
+      const c=document.createElement('canvas');
+      c.width=maxW;c.height=Math.round(imgH*s);
+      const ctx=c.getContext('2d');
+      ctx.drawImage(img,0,0,c.width,c.height);
+      if(lms&&lms.length){
+        const r=Math.max(3,Math.round(maxW/55));
+        lms.forEach(lm=>{
+          const col=CATS[lm.cat]||CATS.soft_tissue;
+          const cx=lm.x*s,cy=lm.y*s;
+          ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=col.fill;ctx.fill();
+          ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1;ctx.stroke();
+        });
+      }
+      res(c.toDataURL('image/jpeg',.72));
+    };
+    img.onerror=()=>res(null);img.src=src;
+  });
+}
 
 // ── Archive backup / restore ────────────────────────────────────────────────────
 function exportArchiveBackup(){
@@ -2071,7 +2094,7 @@ function App(){
           // Generate compressed thumbnails for each photo
           const thumbs={};
           for(const k of PHOTO_KEYS){
-            if(previews[k]) thumbs[k]=await generateThumbnail(previews[k]);
+            if(previews[k]) thumbs[k]=await generateAnnotatedThumbnail(previews[k],next[k],dims[k].w,dims[k].h);
           }
           const rec={
             pid,patientName,phone,ipdMm,notes,visitLabel,
