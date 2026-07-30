@@ -863,7 +863,6 @@ function analyseSkeletal(profile,sc){
   const prn=g(profile,'Prn_p'),sn=g(profile,'Sn_p'),ls=g(profile,'Ls_p');
   const li=g(profile,'Li_p'),pog=g(profile,'Pog_p'),cm=g(profile,'Cm');
   const gl=g(profile,'Gl_p');
-  const nasolabial=cm&&sn&&ls?angleDeg(cm,sn,ls):null;
   // Soft-tissue facial convexity angle: Gl–Sn–Pog at vertex Sn. Norm 165–175° (straight profile).
   // < 165° = convex (Class II), > 175° = concave (Class III).
   const convexity=gl&&sn&&pog?angleDeg(gl,sn,pog):null;
@@ -910,10 +909,9 @@ function analyseLip(profile,sc){
   const flags=[];
   if(ulLen&&(ulLen<19||ulLen>24))flags.push(1);
   if(gap!==null&&gap>3)flags.push(1);
-  if(nasolabial&&(nasolabial<90||nasolabial>110))flags.push(1);
   const flag=flags.length>=2?'abnormal':flags.length?'borderline':'within_normal_limits';
   // E-plane calculated in analyseSkeletal — referenced via skel in doAnalyse to avoid duplication
-  return{ulLen,llLen,gap,nasolabial,mentolabial,nosePrj,noseLen,goodesRatio,flag};
+  return{ulLen,llLen,gap,mentolabial,nosePrj,noseLen,goodesRatio,flag};
 }
 function analyseSmile(smile,sc){
   const uiR=g(smile,'UI_R'),uiL=g(smile,'UI_L');
@@ -1057,7 +1055,6 @@ function exportExcel(report,pid,ipdMm){
   row('Upper lip length (Sn→Sto)',report.lip.ulLen,'19–22mm F / 20–24mm M','mm');
   row("Lower lip length (Sto→Me')",report.lip.llLen,'38–44 mm','mm');
   row('Interlabial gap (rest)',report.lip.gap,'0–3 mm','mm');
-  row('Nasolabial angle',report.lip.nasolabial,'90–110°','°');
   row('Mentolabial fold angle',report.lip.mentolabial,'120–135°','°');
   row("Nose projection (Goode's ratio)",report.lip.goodesRatio,'0.55–0.60','');
   row('Lip competence assessment',report.lip.flag?.replace(/_/g,' '));
@@ -1827,7 +1824,6 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
             <Row label={T.ulLen}        val={report.lip.ulLen}        norm="19–22mm (F) · 20–24mm (M)"/>
             <Row label={T.llLen}        val={report.lip.llLen}        norm="38–44 mm"/>
             <Row label={T.gap}          val={report.lip.gap}          norm="0–3 mm"/>
-            <Row label={T.nasolabialLip} val={report.lip.nasolabial}  norm="90–110°"  unit="°"/>
             <Row label={T.mentolabial}  val={report.lip.mentolabial}  norm="120–135°" unit="°"/>
             <Row label={T.goodesRatio}  val={report.lip.goodesRatio}  norm="0.55–0.60"/>
           </tbody></table>
