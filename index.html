@@ -863,6 +863,7 @@ function analyseSkeletal(profile,sc){
   const prn=g(profile,'Prn_p'),sn=g(profile,'Sn_p'),ls=g(profile,'Ls_p');
   const li=g(profile,'Li_p'),pog=g(profile,'Pog_p'),cm=g(profile,'Cm');
   const gl=g(profile,'Gl_p');
+    const nasolabial=cm&&sn&&ls?angleDeg(cm,sn,ls):null;
   // Soft-tissue facial convexity angle: Gl–Sn–Pog at vertex Sn. Norm 165–175° (straight profile).
   // < 165° = convex (Class II), > 175° = concave (Class III).
   const convexity=gl&&sn&&pog?angleDeg(gl,sn,pog):null;
@@ -900,7 +901,6 @@ function analyseLip(profile,sc){
   const ulLen=sn&&sto?mm(dist(sn,sto)):null;
   const llLen=sto&&me?mm(dist(sto,me)):null;
   const gap=ls&&li?Math.max(0,mm(li.y-ls.y)):null;
-  const nasolabial=cm&&sn&&ls?angleDeg(cm,sn,ls):null;
   const mentolabial=li&&b&&pog?angleDeg(li,b,pog):null;
   // Goode's ratio: horizontal nose projection (Sn→Prn) / nose length (N_p→Prn_p). Norm 0.55–0.60.
   const nosePrj=prn&&sn&&sc?r1(Math.abs(prn.x-sn.x)*sc):null;
