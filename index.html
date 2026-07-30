@@ -1655,7 +1655,7 @@ function DevPanel({report,ipdMm,photoLms,photoPreviews}){
 }
 function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,selectedVisitIdx,thumbnails,photoPreviews,photoLms}){
   const [lang,setLang]=React.useState('en');
-  const [withPhotos,setWithPhotos]=React.useState(false);
+  const [withPhotos,setWithPhotos]=React.useState(true);
   const [devMode,setDevMode]=React.useState(false);
   const [showDevConfirm,setShowDevConfirm]=React.useState(false);
   const [activeTab,setActiveTab]=React.useState('report');
