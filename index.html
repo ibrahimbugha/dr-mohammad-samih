@@ -1549,17 +1549,44 @@ const TR={
     eNormNote:'معايير المستوى E تتبع مجموعة المعايير المختارة (القوقازيون: Ricketts 1968؛ العرب: Bishara 1986).',
   }
 };
+// PhotoRef component
+function PhotoRef({photoKey,usedIds,photoLms,photoPreviews}){
+  const cvRef=React.useRef(null);
+  React.useEffect(()=>{
+    const url=photoPreviews?.[photoKey];if(!cvRef.current||!url)return;
+    const img=new Image();
+    img.onload=()=>{
+      const cv=cvRef.current;if(!cv)return;
+      const W=250,H=Math.round(img.naturalHeight*W/img.naturalWidth);
+      cv.width=W;cv.height=H;
+      const ctx=cv.getContext('2d');
+      ctx.drawImage(img,0,0,W,H);ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(0,0,W,H);
+      (photoLms?.[photoKey]||[]).forEach(lm=>{
+        const used=usedIds.includes(lm.id);
+        const cx=lm.x*W/img.naturalWidth,cy=lm.y*H/img.naturalHeight;
+        ctx.beginPath();ctx.arc(cx,cy,used?6:2.5,0,Math.PI*2);
+        ctx.fillStyle=used?'#facc15':'rgba(255,255,255,.2)';ctx.fill();
+        if(used){ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=1.5;ctx.stroke();ctx.font='bold 9px monospace';ctx.fillStyle='#fff';ctx.shadowColor='#000';ctx.shadowBlur=3;ctx.fillText(lm.id,cx+8,cy+4);ctx.shadowColor='transparent';}
+      });
+    };
+    img.src=url;
+  },[photoKey,photoPreviews,photoLms]);
+  if(!photoPreviews?.[photoKey])return <span style={{color:'rgba(100,116,139,.6)',fontSize:10,fontStyle:'italic'}}>live session only</span>;
+  return(<div style={{marginTop:8,borderRadius:8,overflow:'hidden',border:'1.5px solid rgba(250,204,21,.35)',display:'inline-block',maxWidth:'100%'}}><div style={{background:'#0a0f1e',padding:'3px 10px',fontSize:9,color:'#fbbf24',fontWeight:700}}>{photoKey.toUpperCase()} — yellow = used landmarks</div><canvas ref={cvRef} style={{display:'block',maxWidth:'100%'}}/></div>);
+}
 // DevPanel: full calculation breakdown
-function DevPanel({report,ipdMm}){
+function DevPanel({report,ipdMm,photoLms,photoPreviews}){
   const sc=report.scale;
+  const [showPhotoRef,setShowPhotoRef]=React.useState(false);
   const r2=v=>v!=null?Math.round(v*100)/100:'—';
   const px=v=>sc&&v!=null?r2(Math.abs(v)/sc)+'px':'—px';
   const {sym,thirds,skel,lip,smile,mid,oj,eNorm}=report;
   const clr=s=>s==='NORMAL'?'#16a34a':s==='INFO'?'#2563eb':s.startsWith('CLASS')?'#7c3aed':'#dc2626';
-  const Section=({title,children})=>(
+  const Section=({title,children,photoNode})=>(
     <div style={{marginBottom:14,borderRadius:8,overflow:'hidden',border:'1.5px solid #e2e8f0',breakInside:'avoid'}}>
       <div style={{background:'#0f172a',color:'#93c5fd',fontWeight:700,fontSize:10,padding:'5px 12px',letterSpacing:'.07em',textTransform:'uppercase'}}>{title}</div>
       <div style={{padding:'10px 12px',background:'#f8fafc',fontFamily:'monospace',fontSize:11,lineHeight:1.9}}>{children}</div>
+      {photoNode}
     </div>
   );
   const DRow=({label,formula,val,norm,sts})=>(
@@ -1574,18 +1601,16 @@ function DevPanel({report,ipdMm}){
     <div>
       <div style={{background:'#0f172a',borderRadius:10,padding:'12px 16px',marginBottom:14,color:'#93c5fd',display:'flex',alignItems:'center',gap:12}}>
         <span style={{fontSize:20}}>⚙️</span>
-        <div>
-          <div style={{fontWeight:700,fontSize:13}}>DEVELOPER MODE — Full Calculation Breakdown</div>
-          <div style={{color:'rgba(255,255,255,.4)',fontSize:11}}>All formulas with actual computed values · Not for clinical use</div>
-        </div>
+        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13}}>DEVELOPER MODE — Full Calculation Breakdown</div><div style={{color:'rgba(255,255,255,.4)',fontSize:11}}>All formulas with actual computed values · Not for clinical use</div></div>
+        {photoPreviews&&<button onClick={()=>setShowPhotoRef(p=>!p)} style={{flexShrink:0,background:showPhotoRef?'#facc15':'rgba(255,255,255,.1)',color:showPhotoRef?'#0f172a':'rgba(255,255,255,.7)',border:'none',borderRadius:7,padding:'6px 14px',fontWeight:700,cursor:'pointer',fontSize:11}}>📷 Photo refs {showPhotoRef?'ON ✓':'OFF'}</button>}
       </div>
-      <Section title="Calibration">
+      <Section title="Calibration" photoNode={showPhotoRef&&<PhotoRef photoKey="frontal" usedIds={['ExR','ExL']} photoLms={photoLms} photoPreviews={photoPreviews}/>}>
         {sc
           ?<><div><b>Scale:</b> IPD({ipdMm}mm) / (ExR–ExL × 0.70) = {ipdMm} / ({r2(ipdMm/sc/0.70)}px × 0.70) = <b>{sc.toFixed(5)} mm/px</b></div>
             <div style={{color:'#64748b',fontSize:10}}>Ref: Farkas 1994 · outer canthi distance × 0.70 as IPD proxy</div></>
           :<div style={{color:'#ef4444'}}>⚠ Scale not computed — outer canthi (ExR/ExL) landmarks missing</div>}
       </Section>
-      <Section title="Facial Symmetry (Frontal) — Arnett &amp; Bergman 1993">
+      <Section title="Facial Symmetry (Frontal) — Arnett &amp; Bergman 1993" photoNode={showPhotoRef&&<PhotoRef photoKey="frontal" usedIds={['Gl','Sn','Me','Prn','AlR','AlL','ChR','ChL','EnR','EnL']} photoLms={photoLms} photoPreviews={photoPreviews}/>}>
         <div style={{color:'#64748b',fontSize:10,marginBottom:4}}>Midline X = Gl.x (or Sn.x). All deviations = |landmark.x − midline.x| × scale</div>
         {sym.chinDev!=null&&<DRow label="Chin (Me)" formula={`|Me.x−midline|×scale = ${px(sym.chinDev)}×${sc?.toFixed(4)}`} val={`${sym.chinDev} mm`} norm="&lt;2mm" sts={sym.chinDev>2?'ABNORMAL':sym.chinDev>1.5?'BORDERLINE':'NORMAL'}/>}
         {sym.noseDev!=null&&<DRow label="Nose tip (Prn)" formula={`|Prn.x−midline|×scale = ${px(sym.noseDev)}×${sc?.toFixed(4)}`} val={`${sym.noseDev} mm`} norm="&lt;2mm" sts={sym.noseDev>2?'ABNORMAL':sym.noseDev>1.5?'BORDERLINE':'NORMAL'}/>}
@@ -1594,13 +1619,13 @@ function DevPanel({report,ipdMm}){
         {sym.canthAsym!=null&&<DRow label="Canthi" formula={`|(EnR+EnL)/2−mid|×sc = ${px(sym.canthAsym)}×${sc?.toFixed(4)}`} val={`${sym.canthAsym} mm`} norm="&lt;2mm" sts={sym.canthAsym>2?'ABNORMAL':sym.canthAsym>1.5?'BORDERLINE':'NORMAL'}/>}
         <div style={{marginTop:4,color:'#334155'}}>Overall: <b>{sym.flag?.replace(/_/g,' ').toUpperCase()}</b></div>
       </Section>
-      <Section title="Facial Thirds (Frontal)">
+      <Section title="Facial Thirds (Frontal)" photoNode={showPhotoRef&&<PhotoRef photoKey="frontal" usedIds={['Gl','Sn','Me']} photoLms={photoLms} photoPreviews={photoPreviews}/>}>
         <div style={{color:'#64748b',fontSize:10,marginBottom:4}}>Vertical proportions Gl→Sn→Me. Each third = segment / total × 100</div>
         {thirds.upPct!=null&&<DRow label="Upper 1/3" formula="hairline→Gl / total" val={`${thirds.upPct}%`} norm="≈33.3%" sts={Math.abs(thirds.upPct-33.3)>5?'ABNORMAL':Math.abs(thirds.upPct-33.3)>3?'BORDERLINE':'NORMAL'}/>}
         {thirds.midPct!=null&&<DRow label="Middle 1/3" formula="(Sn.y−Gl.y)/(Me.y−Gl.y)×100" val={`${thirds.midPct}%`} norm="≈33.3%" sts={Math.abs(thirds.midPct-33.3)>5?'ABNORMAL':Math.abs(thirds.midPct-33.3)>3?'BORDERLINE':'NORMAL'}/>}
         {thirds.lowPct!=null&&<DRow label="Lower 1/3" formula="(Me.y−Sn.y)/(Me.y−Gl.y)×100" val={`${thirds.lowPct}%`} norm="≈33.3%" sts={Math.abs(thirds.lowPct-33.3)>5?'ABNORMAL':Math.abs(thirds.lowPct-33.3)>3?'BORDERLINE':'NORMAL'}/>}
       </Section>
-      <Section title="Skeletal Analysis (Profile)">
+      <Section title="Skeletal Analysis (Profile)" photoNode={showPhotoRef&&<PhotoRef photoKey="profile" usedIds={['Gl_p','Sn_p','Pog_p','Prn_p','Ls_p','Li_p','Cm']} photoLms={photoLms} photoPreviews={photoPreviews}/>}>
         <div style={{color:'#64748b',fontSize:10,marginBottom:4}}>Ethnicity norms: {report.ethnicity||'caucasian'} · Ricketts 1968 / Bishara 1986</div>
         {skel.convexity!=null&&<DRow label="Convexity" formula="angle(Gl→Sn→Pog) at vertex Sn" val={`${skel.convexity}°`} norm="165–175°" sts={skel.convexity<163?'ABNORMAL(II)':skel.convexity<165?'BORDERLINE(II)':skel.convexity>177?'ABNORMAL(III)':skel.convexity>175?'BORDERLINE(III)':'NORMAL'}/>}
         {skel.nasolabial!=null&&<DRow label="Nasolabial" formula="angle(Cm→Sn→Ls)" val={`${skel.nasolabial}°`} norm="90–110°" sts={skel.nasolabial<85||skel.nasolabial>120?'ABNORMAL':skel.nasolabial<90||skel.nasolabial>110?'BORDERLINE':'NORMAL'}/>}
@@ -1610,20 +1635,20 @@ function DevPanel({report,ipdMm}){
         <div style={{marginTop:6,fontSize:12}}><b>Class: </b><span style={{color:'#3b82f6',fontWeight:700}}>{skel.cls}</span></div>
         <div style={{fontSize:10,color:'#64748b'}}>Logic: convexity &lt;163°→II · &gt;177°→III · else pogSn&gt;2→III · &lt;−5→II · else I</div>
       </Section>
-      <Section title="Lip Analysis (Profile)">
+      <Section title="Lip Analysis (Profile)" photoNode={showPhotoRef&&<PhotoRef photoKey="profile" usedIds={['Sn_p','Sto','Li_p','Me_p','Cm','Ls_p','B_p','Pog_p','Prn_p','N_p']} photoLms={photoLms} photoPreviews={photoPreviews}/>}>
         {lip.ulLen!=null&&<DRow label="Upper lip" formula={`dist(Sn,Sto)×sc = ${px(lip.ulLen)}×${sc?.toFixed(4)}`} val={`${lip.ulLen} mm`} norm="19–24mm" sts={lip.ulLen<19||lip.ulLen>24?'BORDERLINE':'NORMAL'}/>}
         {lip.llLen!=null&&<DRow label="Lower lip" formula={`dist(Sto,Me)×sc = ${px(lip.llLen)}×${sc?.toFixed(4)}`} val={`${lip.llLen} mm`} norm="38–44mm" sts={lip.llLen<38||lip.llLen>44?'BORDERLINE':'NORMAL'}/>}
         {lip.gap!=null&&<DRow label="Gap" formula={`max(0,(Li.y−Ls.y))×sc = ${px(lip.gap)}×${sc?.toFixed(4)}`} val={`${lip.gap} mm`} norm="0–3mm" sts={lip.gap>5?'ABNORMAL':lip.gap>3?'BORDERLINE':'NORMAL'}/>}
         {lip.mentolabial!=null&&<DRow label="Mentolabial" formula="angle(Li→B→Pog)" val={`${lip.mentolabial}°`} norm="120–135°" sts={lip.mentolabial<120||lip.mentolabial>135?'BORDERLINE':'NORMAL'}/>}
         {lip.goodesRatio!=null&&<DRow label="Goode ratio" formula={`nosePrj/noseLen = ${lip.nosePrj}/${lip.noseLen}`} val={`${lip.goodesRatio}`} norm="0.55–0.60" sts={lip.goodesRatio<0.55||lip.goodesRatio>0.60?'BORDERLINE':'NORMAL'}/>}
       </Section>
-      <Section title="Smile &amp; Midline">
+      <Section title="Smile &amp; Midline" photoNode={showPhotoRef&&<PhotoRef photoKey="smile" usedIds={['UI_R','UI_L','ChR_s','ChL_s','BCR','BCL','UDM_s']} photoLms={photoLms} photoPreviews={photoPreviews}/>}>
         <div><b>Smile arc:</b> {smile.arc}</div>
         {smile.bcLeft!=null&&<DRow label="L buccal" formula="(BCL.x−ChL.x)/(ChL.x−ChR.x)×100" val={`${smile.bcLeft}%`} norm="10–15%" sts={smile.bcLeft<10||smile.bcLeft>15?'BORDERLINE':'NORMAL'}/>}
         {smile.bcRight!=null&&<DRow label="R buccal" formula="(ChR.x−BCR.x)/(ChL.x−ChR.x)×100" val={`${smile.bcRight}%`} norm="10–15%" sts={smile.bcRight<10||smile.bcRight>15?'BORDERLINE':'NORMAL'}/>}
         {mid.udmDev!=null&&<DRow label="UDM deviation" formula={`|UDM_s.x−Gl.x|×sc = ${px(mid.udmDev)}×${sc?.toFixed(4)}`} val={`${mid.udmDev} mm`} norm="&lt;1mm" sts={mid.udmDev>2?'ABNORMAL':mid.udmDev>1?'BORDERLINE':'NORMAL'}/>}
       </Section>
-      <Section title="Overjet / Overbite — Proffit &amp; Fields 2013">
+      <Section title="Overjet / Overbite — Proffit &amp; Fields 2013" photoNode={showPhotoRef&&<PhotoRef photoKey="smile" usedIds={['UI_R','UI_L','LI_R','LI_L']} photoLms={photoLms} photoPreviews={photoPreviews}/>}>
         <div style={{color:'#ef4444',fontSize:10,fontWeight:600,marginBottom:4}}>⚠ Photographic estimate only</div>
         {oj.oj!=null&&<DRow label="Overjet" formula={`avg(|UI_R.x−LI_R.x|,|UI_L.x−LI_L.x|)×sc = ${px(oj.oj)}×${sc?.toFixed(4)}`} val={`${oj.oj} mm`} norm="2–4mm" sts={oj.ojCls==='normal'?'NORMAL':oj.ojCls.includes('severe')?'ABNORMAL':'BORDERLINE'}/>}
         {oj.ob!=null&&<DRow label="Overbite" formula={`avg((LI_R.y−UI_R.y),(LI_L.y−UI_L.y))×sc = ${px(oj.ob)}×${sc?.toFixed(4)}`} val={`${oj.ob} mm`} norm="2–4mm" sts={oj.obCls==='normal'?'NORMAL':['open_bite','severely_increased'].includes(oj.obCls)?'ABNORMAL':'BORDERLINE'}/>}
@@ -1631,12 +1656,13 @@ function DevPanel({report,ipdMm}){
     </div>
   );
 }
-function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,selectedVisitIdx,thumbnails}){
+function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,selectedVisitIdx,thumbnails,photoPreviews,photoLms}){
   const [lang,setLang]=React.useState('en');
   const [withPhotos,setWithPhotos]=React.useState(false);
   const [devMode,setDevMode]=React.useState(false);
   const [showDevConfirm,setShowDevConfirm]=React.useState(false);
   const [activeTab,setActiveTab]=React.useState('report');
+  const [showPoints,setShowPoints]=React.useState(true);
   const T=TR[lang]||TR.en;
   const isAr=lang==='ar';
   React.useEffect(()=>{
@@ -1669,7 +1695,7 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
               <div className="photo-hero-strip" style={{display:withPhotos?'flex':'none',gap:10,marginTop:14,alignItems:'flex-end'}}>
                 {['frontal','profile','smile'].map(k=>thumbnails[k]?(
                   <div key={k} style={{textAlign:'center'}}>
-                    <img src={thumbnails[k]} alt={k} style={{width:72,height:90,objectFit:'cover',borderRadius:8,border:'2px solid rgba(255,255,255,.25)',display:'block'}}/>
+                    <img src={showPoints?thumbnails[k]:(photoPreviews?.[k]||thumbnails[k])} alt={k} style={{width:130,height:160,objectFit:'cover',borderRadius:8,border:'2px solid rgba(255,255,255,.25)',display:'block'}}/>
                     <span style={{fontSize:9,color:'rgba(255,255,255,.45)',textTransform:'capitalize',marginTop:3,display:'block'}}>{k}</span>
                   </div>
                 ):null)}
@@ -1760,7 +1786,7 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
           <button onClick={()=>setActiveTab('dev')} style={{padding:'8px 22px',border:'none',cursor:'pointer',fontWeight:700,fontSize:13,background:activeTab==='dev'?'#3b82f6':'#f8fafc',color:activeTab==='dev'?'#fff':'var(--gray-600)'}}>⚙️ Dev Mode</button>
         </div>
       )}
-      {devMode&&activeTab==='dev'&&<DevPanel report={report} ipdMm={ipdMm}/>}
+      {devMode&&activeTab==='dev'&&<DevPanel report={report} ipdMm={ipdMm} photoLms={photoLms} photoPreviews={photoPreviews}/>}
       <div style={{display:devMode&&activeTab==='dev'?'none':'block'}}>
       <div className="results-grid">
         <RCard title={T.symmetry} flag={report.sym.flag}>
@@ -1854,7 +1880,7 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
       </div>
       {devMode&&(
         <div className="dev-print-page" style={{display:'none'}}>
-          <DevPanel report={report} ipdMm={ipdMm}/>
+          <DevPanel report={report} ipdMm={ipdMm} photoLms={photoLms} photoPreviews={photoPreviews}/>
         </div>
       )}
       {showDevConfirm&&(
@@ -2465,6 +2491,8 @@ function App(){
             allVisits={allV}
             selectedVisitIdx={allV?allV.length-1:null}
             thumbnails={liveThumbs}
+            photoPreviews={previews}
+            photoLms={confirmed}
             onBack={()=>setStage('archive')}
             onNewPatient={handleReset}/>
         );
