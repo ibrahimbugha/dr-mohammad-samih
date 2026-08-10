@@ -1687,7 +1687,7 @@ function DevPanel({report,ipdMm,photoLms,photoPreviews}){
 }
 function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,selectedVisitIdx,thumbnails,photoPreviews,photoLms}){
   const [lang,setLang]=React.useState('en');
-  const [withPhotos,setWithPhotos]=React.useState(true);
+  const [photoMode,setPhotoMode]=React.useState('annotated'); // annotated|thumb|none
   const [devMode,setDevMode]=React.useState(false);
   const [showDevConfirm,setShowDevConfirm]=React.useState(false);
   const [showChangelog,setShowChangelog]=React.useState(false);
@@ -1721,12 +1721,19 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
               {borderCount>0&&<span style={{background:'rgba(245,158,11,.15)',border:'1px solid rgba(245,158,11,.35)',borderRadius:20,padding:'3px 11px',fontSize:11,color:'#fcd34d',fontWeight:600}}>⚠️ {borderCount} Borderline</span>}
               {normalCount>0&&<span style={{background:'rgba(34,197,94,.15)',border:'1px solid rgba(34,197,94,.3)',borderRadius:20,padding:'3px 11px',fontSize:11,color:'#86efac',fontWeight:600}}>✅ {normalCount} Normal</span>}
             </div>
-            {thumbnails&&(thumbnails.frontal||thumbnails.profile||thumbnails.smile)&&(
-              <div className="photo-hero-strip" style={{display:withPhotos?'flex':'none',gap:10,marginTop:14,alignItems:'flex-end'}}>
+            {/* صورة تعريفية — ID photo next to name */}
+            {thumbnails&&(thumbnails.frontal||thumbnails.profile||thumbnails.smile)&&photoMode==='thumb'&&(
+              <img src={thumbnails.frontal||thumbnails.profile||thumbnails.smile} alt="patient"
+                style={{width:56,height:70,objectFit:'cover',borderRadius:8,border:'2px solid rgba(255,255,255,.2)',marginTop:10,display:'block'}}/>
+            )}
+            {/* Annotated photo strip */}
+            {thumbnails&&(thumbnails.frontal||thumbnails.profile||thumbnails.smile)&&photoMode==='annotated'&&(
+              <div className="photo-hero-strip" style={{display:'flex',gap:10,marginTop:14,alignItems:'flex-end'}}>
                 {['frontal','profile','smile'].map(k=>thumbnails[k]?(
                   <div key={k} style={{textAlign:'center'}}>
-                    <img src={showPoints?thumbnails[k]:(photoPreviews?.[k]||thumbnails[k])} alt={k} style={{width:130,height:160,objectFit:'cover',borderRadius:8,border:'2px solid rgba(255,255,255,.25)',display:'block'}}/>
-                    <span style={{fontSize:9,color:'rgba(255,255,255,.45)',textTransform:'capitalize',marginTop:3,display:'block'}}>{k}</span>
+                    <img src={showPoints?thumbnails[k]:(photoPreviews?.[k]||thumbnails[k])} alt={k}
+                      style={{width:72,height:90,objectFit:'cover',borderRadius:8,border:'2px solid rgba(255,255,255,.25)',display:'block'}}/>
+                    <span style={{fontSize:9,color:'rgba(255,255,255,.45)',textTransform:'capitalize',marginTop:3,display:'block',letterSpacing:'.04em'}}>{k}</span>
                   </div>
                 ):null)}
               </div>
@@ -1743,11 +1750,17 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
                 </button>
               ))}
             </div>
-            <label className="cb-lbl no-print" style={{color:'rgba(255,255,255,.8)',fontSize:12,display:'flex',alignItems:'center',gap:6,cursor:'pointer',userSelect:'none'}}>
-              <input type="checkbox" checked={withPhotos} onChange={e=>setWithPhotos(e.target.checked)} style={{accentColor:'#60a5fa',width:14,height:14}}/>
-              {isAr?'مع الصور':'With photo'}
-            </label>
-            <button className="btn btn-pdf" onClick={()=>setTimeout(()=>window.print(),100)}>📄 {isAr?'طباعة PDF':'Export PDF'}</button>
+            <div className="no-print" style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:5}}>
+              <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                {[['annotated',isAr?'مع النقاط':'Annotated'],['thumb',isAr?'صورة تعريفية':'ID photo'],['none',isAr?'بدون صور':'No photos']].map(([v,lbl])=>(
+                  <label key={v} style={{display:'flex',alignItems:'center',gap:4,cursor:'pointer',fontSize:11,color:'rgba(255,255,255,.75)',userSelect:'none',fontWeight:photoMode===v?700:400}}>
+                    <input type="radio" name="photoMode" value={v} checked={photoMode===v} onChange={()=>setPhotoMode(v)} style={{accentColor:'#60a5fa'}}/>
+                    {lbl}
+                  </label>
+                ))}
+              </div>
+              <button className="btn btn-pdf" onClick={()=>setTimeout(()=>window.print(),100)}>📄 {isAr?'طباعة PDF':'Export PDF'}</button>
+            </div>
             <button className="btn btn-xlsx" onClick={()=>exportExcel(report,pid,ipdMm)}>📊 {isAr?'تصدير Excel':'Export Excel'}</button>
             {fromArchive
               ? <button className="btn btn-secondary" onClick={onBack}>{isAr?'← الأرشيف':'← Archive'}</button>
