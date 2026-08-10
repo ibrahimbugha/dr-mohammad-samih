@@ -1723,8 +1723,8 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
             </div>
             {/* صورة تعريفية — ID photo next to name */}
             {thumbnails&&(thumbnails.frontal||thumbnails.profile||thumbnails.smile)&&photoMode==='thumb'&&(
-              <img src={thumbnails.frontal||thumbnails.profile||thumbnails.smile} alt="patient"
-                style={{width:56,height:70,objectFit:'cover',borderRadius:8,border:'2px solid rgba(255,255,255,.2)',marginTop:10,display:'block'}}/>
+              <img src={photoPreviews?.frontal||photoPreviews?.profile||photoPreviews?.smile||thumbnails.frontal||thumbnails.profile||thumbnails.smile} alt="patient"
+                style={{width:130,height:163,objectFit:'cover',borderRadius:10,border:'3px solid rgba(255,255,255,.35)',marginTop:12,display:'block'}}/>
             )}
             {/* Annotated photo strip */}
             {thumbnails&&(thumbnails.frontal||thumbnails.profile||thumbnails.smile)&&photoMode==='annotated'&&(
@@ -1732,7 +1732,7 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
                 {['frontal','profile','smile'].map(k=>thumbnails[k]?(
                   <div key={k} style={{textAlign:'center'}}>
                     <img src={showPoints?thumbnails[k]:(photoPreviews?.[k]||thumbnails[k])} alt={k}
-                      style={{width:72,height:90,objectFit:'cover',borderRadius:8,border:'2px solid rgba(255,255,255,.25)',display:'block'}}/>
+                  style={{width:100,height:125,objectFit:'cover',borderRadius:8,border:'2px solid rgba(255,255,255,.25)',display:'block'}}/>
                     <span style={{fontSize:9,color:'rgba(255,255,255,.45)',textTransform:'capitalize',marginTop:3,display:'block',letterSpacing:'.04em'}}>{k}</span>
                   </div>
                 ):null)}
