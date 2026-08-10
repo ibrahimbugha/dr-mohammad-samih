@@ -183,6 +183,30 @@ canvas{display:block}
 .spinner-lg{width:40px;height:40px;border:4px solid var(--blue-border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
 .spinner-sm{width:13px;height:13px;border:2px solid var(--gray-300);border-top-color:var(--blue);border-radius:50%;animation:spin .6s linear infinite;display:inline-block;vertical-align:middle}
 
+/* ── Changelog modal ── */
+.cl-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;animation:fadeInBg .2s}
+.cl-panel{background:#fff;border-radius:20px 20px 0 0;padding:28px 28px 40px;max-width:560px;width:100%;max-height:80vh;overflow-y:auto;animation:slideUp .28s cubic-bezier(.32,.72,0,1)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes fadeInBg{from{opacity:0}to{opacity:1}}
+.cl-ver{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.cl-ver-badge{background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;border-radius:6px;padding:2px 10px;font-size:11px;font-weight:700;font-family:monospace;letter-spacing:.05em}
+.cl-date{font-size:11px;color:var(--gray-400);font-weight:500}
+.cl-new{font-size:10px;background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;border-radius:10px;padding:1px 7px;font-weight:700}
+.cl-item{font-size:12.5px;color:var(--gray-700);padding:3px 0 3px 18px;position:relative;line-height:1.45}
+.cl-item::before{content:'✓';position:absolute;left:0;color:var(--green);font-size:10px;top:5px;font-weight:700}
+/* RCard status left borders */
+.rcard.flag-normal{border-left:4px solid var(--green)!important}
+.rcard.flag-borderline{border-left:4px solid var(--amber)!important}
+.rcard.flag-abnormal{border-left:4px solid var(--red)!important}
+/* Measurement value status colours */
+.val-n{color:var(--green)!important;font-weight:700!important}
+.val-b{color:var(--amber)!important;font-weight:700!important}
+.val-a{color:var(--red)!important;font-weight:700!important}
+/* Header version + changelog btn */
+.hdr-ver{font-size:10px;background:rgba(99,102,241,.3);color:#a5b4fc;border:1px solid rgba(99,102,241,.4);border-radius:12px;padding:2px 9px;font-weight:700;font-family:monospace;letter-spacing:.05em}
+.hdr-cl-btn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:8px;background:rgba(99,102,241,.18);color:#a5b4fc;border:1px solid rgba(99,102,241,.3);font-size:11px;font-weight:600;cursor:pointer;transition:all .18s;line-height:1}
+.hdr-cl-btn:hover{background:rgba(99,102,241,.32);color:#c4b5fd;border-color:rgba(99,102,241,.5)}
+
 /* ── Print ── */
 @media print{
   .hdr,.pbar,.no-print{display:none!important}
@@ -295,6 +319,12 @@ const STEPS = [
 ];
 const REVIEW_STAGES = ['review-frontal','review-profile','review-smile'];
 const PHOTO_KEYS    = ['frontal','profile','smile'];
+// ── Changelog ─────────────────────────────────────────────────────────────────
+const CHANGELOG=[
+  {v:'2.1',date:'Aug 2026',items:['Annotated photo thumbnails with landmark points in report','Plain / annotated photo toggle','Dev mode: per-section photo reference with highlighted landmarks','Nasolabial angle consolidated to Skeletal section only','Photos shown by default in report header','Print layout: photos always visible when printing']},
+  {v:'2.0',date:'Jul 2026',items:['Arab/Middle Eastern & Asian E-plane norms (ethnicity selector)','Patient clinical notes field (saved with every visit)','Nose projection — Goode\'s ratio','Facial convexity angle (Gl–Sn–Pog)','Mentolabial fold angle','Multi-visit tracking per patient','Excel export of all measurements','Smile arc & buccal corridor analysis']},
+  {v:'1.0',date:'May 2026',items:['Initial release: 7 soft-tissue analyses','AI-assisted auto landmark detection','Print-ready clinical PDF report','Patient archive with search & backup']},
+];
 
 // ── Archive (localStorage) ────────────────────────────────────────────────────
 const ARCHIVE_KEY = 'ortho_archive_v1';
@@ -1479,18 +1509,18 @@ function Badge({flag}){
   const lbl={within_normal_limits:'Normal',borderline:'Borderline',abnormal:'Abnormal',missing_data:'No data'}[flag]||flag;
   return <span className={`badge ${cls}`}>{lbl}</span>;
 }
-function Row({label,val,norm,unit='mm'}){
+function Row({label,val,norm,unit='mm',sts}){
   if(val==null)return null;
-  return(<tr><td>{label}</td><td>{typeof val==='number'?val.toFixed(1):val}{typeof val==='number'?` ${unit}`:''}</td><td>{norm}</td></tr>);
+  const vCls=sts==='normal'?'val-n':sts==='borderline'?'val-b':sts==='abnormal'?'val-a':'';
+  return(<tr><td>{label}</td><td className={vCls}>{typeof val==='number'?val.toFixed(1):val}{typeof val==='number'?` ${unit}`:''}</td><td>{norm}</td></tr>);
 }
 function RCard({title,flag,children,wide}){
+  const fCls=flag?({within_normal_limits:'flag-normal',borderline:'flag-borderline',abnormal:'flag-abnormal'}[flag]||''):'';
   return(
-    <div className={`rcard${wide?' wide':''}`}>
+    <div className={`rcard${wide?' wide':''}${fCls?' '+fCls:''}`}>
       <div className="card-hdr"><h3>{title}</h3>{flag&&<Badge flag={flag}/>}</div>
       {children}
-    </div>
-  );
-}
+    </div>}
 
 const TR={
   en:{
@@ -1658,6 +1688,7 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
   const [withPhotos,setWithPhotos]=React.useState(true);
   const [devMode,setDevMode]=React.useState(false);
   const [showDevConfirm,setShowDevConfirm]=React.useState(false);
+  const [showChangelog,setShowChangelog]=React.useState(false);
   const [activeTab,setActiveTab]=React.useState('report');
   const [showPoints,setShowPoints]=React.useState(true);
   const T=TR[lang]||TR.en;
@@ -1788,8 +1819,8 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
       <div className="results-grid">
         <RCard title={T.symmetry} flag={report.sym.flag}>
           <table className="meas-table"><tbody>
-            <Row label={T.chinDev}   val={report.sym.chinDev}   norm="< 2 mm"/>
-            <Row label={T.noseDev}   val={report.sym.noseDev}   norm="< 2 mm"/>
+            <Row label={T.chinDev}   val={report.sym.chinDev}   norm="< 2 mm" sts={report.sym.chinDev==null?undefined:report.sym.chinDev>2?'abnormal':report.sym.chinDev>1.5?'borderline':'normal'}/>
+            <Row label={T.noseDev}   val={report.sym.noseDev}   norm="< 2 mm" sts={report.sym.noseDev==null?undefined:report.sym.noseDev>2?'abnormal':report.sym.noseDev>1.5?'borderline':'normal'}/>
             <Row label={T.alarAsym}  val={report.sym.alarAsym}  norm="< 2 mm"/>
             <Row label={T.mouthAsym} val={report.sym.mouthAsym} norm="< 2 mm"/>
             <Row label={T.canthAsym} val={report.sym.canthAsym} norm="< 2 mm"/>
@@ -1811,8 +1842,8 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
             <span className={`badge ${report.skel.cls?.includes('III')?'class-III':report.skel.cls?.includes('II')?'class-II':'class-I'}`} style={{padding:'4px 12px',fontWeight:700}}>{report.skel.cls}</span>
           </div>
           <table className="meas-table"><tbody>
-            <Row label={T.convexity}      val={report.skel.convexity} norm="165–175°"         unit="°"/>
-            <Row label={T.nasolabialSkel} val={report.skel.nasolabial} norm="90–110°"         unit="°"/>
+            <Row label={T.convexity}      val={report.skel.convexity} norm="165–175°" unit="°" sts={report.skel.convexity==null?undefined:report.skel.convexity<163||report.skel.convexity>177?'abnormal':report.skel.convexity<165||report.skel.convexity>175?'borderline':'normal'}/>
+            <Row label={T.nasolabialSkel} val={report.skel.nasolabial} norm="90–110°" unit="°" sts={report.skel.nasolabial==null?undefined:report.skel.nasolabial<85||report.skel.nasolabial>120?'abnormal':report.skel.nasolabial<90||report.skel.nasolabial>110?'borderline':'normal'}/>
             <Row label={T.upperEPlane}    val={report.skel.upperE}    norm={`${report.eNorm?.upper??-4} mm`}/>
             <Row label={T.lowerEPlane}    val={report.skel.lowerE}    norm={`${report.eNorm?.lower??-2} mm`}/>
             <Row label={T.pogSn}          val={report.skel.pogSn}     norm="≈ 0 mm (Class I)"/>
@@ -1823,8 +1854,8 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
           <table className="meas-table"><tbody>
             <Row label={T.ulLen}        val={report.lip.ulLen}        norm="19–22mm (F) · 20–24mm (M)"/>
             <Row label={T.llLen}        val={report.lip.llLen}        norm="38–44 mm"/>
-            <Row label={T.gap}          val={report.lip.gap}          norm="0–3 mm"/>
-            <Row label={T.mentolabial}  val={report.lip.mentolabial}  norm="120–135°" unit="°"/>
+            <Row label={T.gap}          val={report.lip.gap}          norm="0–3 mm" sts={report.lip.gap==null?undefined:report.lip.gap>5?'abnormal':report.lip.gap>3?'borderline':'normal'}/>
+            <Row label={T.mentolabial}  val={report.lip.mentolabial}  norm="120–135°" unit="°" sts={report.lip.mentolabial==null?undefined:report.lip.mentolabial<120||report.lip.mentolabial>135?'borderline':'normal'}/>
             <Row label={T.goodesRatio}  val={report.lip.goodesRatio}  norm="0.55–0.60"/>
           </tbody></table>
           <p style={{fontSize:11,color:'var(--gray-400)',marginTop:6}}>Arnett &amp; Bergman (1993) · Goode (1981)</p>
@@ -1877,6 +1908,29 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
       {devMode&&(
         <div className="dev-print-page" style={{display:'none'}}>
           <DevPanel report={report} ipdMm={ipdMm} photoLms={photoLms} photoPreviews={photoPreviews}/>
+        </div>
+      )}
+      {showChangelog&&(
+        <div className="cl-overlay" onClick={e=>{if(e.target===e.currentTarget)setShowChangelog(false)}}>
+          <div className="cl-panel">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+              <div>
+                <h2 style={{fontWeight:800,fontSize:19,color:'#0f172a',letterSpacing:'-.02em'}}>What's New</h2>
+                <p style={{fontSize:12,color:'var(--gray-400)',marginTop:2}}>OrthoAnalyse · Update history</p>
+              </div>
+              <button onClick={()=>setShowChangelog(false)} style={{background:'var(--gray-100)',border:'none',borderRadius:8,width:32,height:32,cursor:'pointer',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>&#x2715;</button>
+            </div>
+            {CHANGELOG.map((entry,i)=>(
+              <div key={entry.v} style={{marginBottom:i<CHANGELOG.length-1?20:0,paddingBottom:i<CHANGELOG.length-1?20:0,borderBottom:i<CHANGELOG.length-1?'1px solid var(--gray-100)':'none'}}>
+                <div className="cl-ver">
+                  <span className="cl-ver-badge">v{entry.v}</span>
+                  <span className="cl-date">{entry.date}</span>
+                  {i===0&&<span className="cl-new">Latest</span>}
+                </div>
+                {entry.items.map((item,j)=><div key={j} className="cl-item">{item}</div>)}
+              </div>
+            ))}
+          </div>
         </div>
       )}
       {showDevConfirm&&(
@@ -2163,8 +2217,10 @@ function App(){
           <span className="hdr-title">OrthoAnalyse</span>
           <span className="hdr-sep"/>
           <span className="hdr-sub">AI-Assisted Soft-Tissue Analysis · Master's Thesis</span>
+          <span className="hdr-ver">v2.1</span>
         </div>
         <div className="hdr-right">
+          <button className="hdr-cl-btn no-print" onClick={()=>setShowChangelog(true)}>📋 What's New</button>
           <div className="hdr-badge"><span className="hdr-dot"/>Decision Support Tool</div>
           <button className="hdr-archive-btn" onClick={()=>{handleReset();setStage('upload');}} style={{background:'rgba(34,197,94,.18)',borderColor:'rgba(34,197,94,.35)',color:'#86efac'}}>
             ＋ New Patient
