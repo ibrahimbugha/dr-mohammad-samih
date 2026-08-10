@@ -1743,8 +1743,11 @@ function ReportView({report,pid,ipdMm,onBack,onNewPatient,fromArchive,allVisits,
                 </button>
               ))}
             </div>
-            <button className="btn btn-pdf" onClick={()=>{setWithPhotos(true);window.addEventListener('afterprint',()=>setWithPhotos(false),{once:true});setTimeout(()=>window.print(),100);}}>🖼️ {isAr?'طباعة مع الصور':'Print with photos'}</button>
-            <button className="btn btn-secondary" style={{background:'rgba(255,255,255,.12)',color:'#e2e8f0',border:'1px solid rgba(255,255,255,.2)'}} onClick={()=>{setWithPhotos(false);setTimeout(()=>window.print(),50);}}>📄 {isAr?'طباعة PDF':'Export PDF'}</button>
+                        <label className="cb-lbl no-print" style={{color:'rgba(255,255,255,.8)',fontSize:12,display:'flex',alignItems:'center',gap:6,cursor:'pointer',userSelect:'none'}}>
+              <input type="checkbox" checked={withPhotos} onChange={e=>setWithPhotos(e.target.checked)} style={{accentColor:'#60a5fa',width:14,height:14}}/>
+              {isAr?'مع الصور':'With photos'}
+            </label>
+            <button className="btn btn-pdf" onClick={()=>setTimeout(()=>window.print(),100)}>📄 {isAr?'طباعة PDF':'Export PDF'}</button>
             <button className="btn btn-xlsx" onClick={()=>exportExcel(report,pid,ipdMm)}>📊 {isAr?'تصدير Excel':'Export Excel'}</button>
             {fromArchive
               ? <button className="btn btn-secondary" onClick={onBack}>{isAr?'← الأرشيف':'← Archive'}</button>
