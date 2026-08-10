@@ -1520,7 +1520,9 @@ function RCard({title,flag,children,wide}){
     <div className={`rcard${wide?' wide':''}${fCls?' '+fCls:''}`}>
       <div className="card-hdr"><h3>{title}</h3>{flag&&<Badge flag={flag}/>}</div>
       {children}
-    </div>}
+    </div>
+  );
+}
 
 const TR={
   en:{
